@@ -66,7 +66,7 @@ export function TradeActionButton({
     );
   }
   return (
-    <Button className="w-full" size="lg" disabled={disabled} onClick={onSubmit}>
+    <Button className="w-full" size="lg" variant="trade" disabled={disabled} onClick={onSubmit}>
       {label}
     </Button>
   );

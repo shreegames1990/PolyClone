@@ -71,3 +71,13 @@ export function buildEventsQuery({ sort, tag, cursor }: BrowseParams, now: numbe
   }
   return query.toString();
 }
+
+/** Home URL for a browse view; default values are omitted so "/" stays canonical. */
+export function browseHref(params: Partial<BrowseParams>): string {
+  const query = new URLSearchParams();
+  if (params.tag) query.set("tag", params.tag);
+  if (params.sort && params.sort !== "trending") query.set("sort", params.sort);
+  if (params.cursor) query.set("cursor", params.cursor);
+  const qs = query.toString();
+  return qs ? `/?${qs}` : "/";
+}

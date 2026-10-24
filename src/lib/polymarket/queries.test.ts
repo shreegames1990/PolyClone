@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildEventsQuery, parseBrowseParams, SORT_OPTIONS } from "./queries";
+import { browseHref, buildEventsQuery, parseBrowseParams, SORT_OPTIONS } from "./queries";
 
 const NOW = Date.UTC(2026, 9, 19, 21, 37, 12);
 
@@ -53,5 +53,18 @@ describe("buildEventsQuery", () => {
     const q = new URLSearchParams(buildEventsQuery({ sort: "ending", tag: "", cursor: "" }, NOW));
     expect(q.get("ascending")).toBe("true");
     expect(q.get("end_date_min")).toBe("2026-10-19T21:00:00.000Z");
+  });
+});
+
+describe("browseHref", () => {
+  it("returns / for the default view", () => {
+    expect(browseHref({})).toBe("/");
+    expect(browseHref({ sort: "trending", tag: "", cursor: "" })).toBe("/");
+  });
+
+  it("encodes tag, non-default sort and cursor", () => {
+    expect(browseHref({ tag: "sports" })).toBe("/?tag=sports");
+    expect(browseHref({ sort: "new" })).toBe("/?sort=new");
+    expect(browseHref({ tag: "crypto", sort: "volume", cursor: "abc" })).toBe("/?tag=crypto&sort=volume&cursor=abc");
   });
 });

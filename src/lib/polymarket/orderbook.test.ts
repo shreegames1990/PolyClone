@@ -4,6 +4,7 @@ import {
   bookFromRest,
   bookSummary,
   emptyBooks,
+  withCumulativeTotals,
   type BooksState,
 } from "./orderbook";
 
@@ -135,5 +136,32 @@ describe("bookSummary", () => {
 
   it("handles a missing book", () => {
     expect(bookSummary(undefined)).toEqual({ bestBid: null, bestAsk: null, mid: null, spread: null });
+  });
+});
+
+describe("withCumulativeTotals", () => {
+  it("sums each level's dollar value with every better level before it", () => {
+    const asks = [
+      { price: 0.71, size: 150 },
+      { price: 0.72, size: 100 },
+      { price: 0.74, size: 10 },
+    ];
+    expect(withCumulativeTotals(asks)).toEqual([
+      { price: 0.71, size: 150, total: 106.5 },
+      { price: 0.72, size: 100, total: 178.5 },
+      { price: 0.74, size: 10, total: 185.9 },
+    ]);
+  });
+
+  it("returns an empty list for no levels", () => {
+    expect(withCumulativeTotals([])).toEqual([]);
+  });
+
+  it("avoids float noise in the running sum", () => {
+    const [, second] = withCumulativeTotals([
+      { price: 0.1, size: 1 },
+      { price: 0.2, size: 1 },
+    ]);
+    expect(second?.total).toBe(0.3);
   });
 });

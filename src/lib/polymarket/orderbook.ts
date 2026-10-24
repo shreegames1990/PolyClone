@@ -137,3 +137,19 @@ export function bookSummary(book: OrderBook | undefined) {
     spread: both ? bestAsk - bestBid : null,
   };
 }
+
+export interface CumulativeLevel extends BookLevel {
+  /** Dollar value of this level plus every better-priced level before it. */
+  readonly total: number;
+}
+
+const MICRO = 1_000_000;
+
+/** Running dollar totals for levels ordered best price first (asks ascending, bids descending). */
+export function withCumulativeTotals(levels: readonly BookLevel[]): CumulativeLevel[] {
+  return levels.reduce<CumulativeLevel[]>((acc, level) => {
+    const previous = acc.at(-1)?.total ?? 0;
+    const total = Math.round((previous + level.price * level.size) * MICRO) / MICRO;
+    return [...acc, { ...level, total }];
+  }, []);
+}

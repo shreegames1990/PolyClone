@@ -14,7 +14,7 @@ export function PortfolioClient() {
 
   if (status !== "disconnected" && !tradingAddress) {
     return (
-      <p className="py-24 text-center text-muted-foreground">
+      <p className="py-24 text-center text-base-content/60">
         {profileStatus === "error" ? "Could not look up your Polymarket account. Refresh to try again." : "Loading your account…"}
       </p>
     );
@@ -23,7 +23,7 @@ export function PortfolioClient() {
     return (
       <div className="flex flex-col items-center gap-4 py-24 text-center">
         <h1 className="text-2xl font-semibold">Your portfolio</h1>
-        <p className="text-muted-foreground">Connect your wallet to see positions, open orders and activity.</p>
+        <p className="text-base-content/60">Connect your wallet to see positions, open orders and activity.</p>
         <ConnectButton />
       </div>
     );

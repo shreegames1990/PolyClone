@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { TickSize } from "@/lib/polymarket/types";
-import type { Market, Outcome, PolyEvent, Tag } from "./types";
+import type { Market, Outcome, PolyEvent, Tag, Team } from "./types";
 
 /**
  * Gamma returns numbers as strings or numbers and several arrays as
@@ -12,11 +12,14 @@ const str = z.string().catch("");
 const bool = z.boolean().catch(false);
 
 const tagSchema = z.object({ id: z.coerce.string().catch(""), label: str, slug: str });
+const EMPTY_TEAM = { name: "", abbreviation: "", color: "", logo: "" };
+const teamSchema = z.object({ name: str, abbreviation: str, color: str, logo: str }).catch(EMPTY_TEAM);
 
 const rawMarketSchema = z.object({
   id: z.coerce.string().catch(""),
   question: str,
   groupItemTitle: str,
+  sportsMarketType: str,
   slug: str,
   conditionId: str,
   image: str,
@@ -48,6 +51,7 @@ const rawMarketSchema = z.object({
 
 const rawEventSchema = z.object({
   id: z.coerce.string().catch(""),
+  parentEventId: z.union([z.string(), z.number()]).transform(String).catch(""),
   slug: str,
   title: str,
   description: str,
@@ -61,6 +65,7 @@ const rawEventSchema = z.object({
   negRisk: bool,
   commentCount: num,
   tags: z.array(tagSchema).catch([]),
+  teams: z.array(z.unknown()).catch([]),
   markets: z.array(z.unknown()).catch([]),
 });
 
@@ -104,6 +109,7 @@ export function normalizeMarket(input: unknown): Market {
     id: raw.id,
     question: raw.question,
     label: raw.groupItemTitle || raw.question,
+    sportsMarketType: raw.sportsMarketType,
     slug: raw.slug,
     conditionId: raw.conditionId,
     image: raw.image || raw.icon,
@@ -132,9 +138,15 @@ export function normalizeMarket(input: unknown): Market {
 }
 
 const yesPrice = (m: Market): number => m.outcomes[0]?.price ?? 0;
+const isMoneyline = (m: Market): boolean => m.sportsMarketType === "moneyline";
 
-/** Open markets first, then by leading-outcome probability. */
+/**
+ * Moneyline markets first, kept in Gamma order (home, draw, away); then open
+ * markets before closed ones, then by leading-outcome probability.
+ */
 function compareMarkets(a: Market, b: Market): number {
+  if (isMoneyline(a) !== isMoneyline(b)) return isMoneyline(a) ? -1 : 1;
+  if (isMoneyline(a)) return 0;
   if (a.closed !== b.closed) return a.closed ? 1 : -1;
   return yesPrice(b) - yesPrice(a);
 }
@@ -143,8 +155,10 @@ export function normalizeEvent(input: unknown): PolyEvent {
   const raw = rawEventSchema.parse(input ?? {});
   const markets = raw.markets.map(normalizeMarket).sort(compareMarkets);
   const tags: Tag[] = raw.tags.filter((t) => t.label !== "");
+  const teams: Team[] = raw.teams.map((t) => teamSchema.parse(t ?? {})).filter((t) => t.name !== "");
   return {
     id: raw.id,
+    parentEventId: raw.parentEventId,
     slug: raw.slug,
     title: raw.title,
     description: raw.description,
@@ -158,6 +172,7 @@ export function normalizeEvent(input: unknown): PolyEvent {
     negRisk: raw.negRisk,
     commentCount: raw.commentCount,
     tags,
+    teams,
     markets,
     isBinary: markets.length === 1,
   };

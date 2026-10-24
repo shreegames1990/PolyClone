@@ -1,4 +1,5 @@
 import { UPSTREAM_TIMEOUT_MS } from "./config";
+import { viaRemoteProxy } from "./remote-proxy";
 
 export class UpstreamError extends Error {
   constructor(
@@ -10,11 +11,15 @@ export class UpstreamError extends Error {
   }
 }
 
-/** GETs JSON from an upstream URL with a timeout and typed errors. */
+/**
+ * GETs JSON from an upstream URL with a timeout and typed errors.
+ * When PM_REMOTE_PROXY_URL is set, Polymarket URLs go through that deployment's proxy.
+ */
 export async function fetchJson(url: URL | string): Promise<unknown> {
+  const target = viaRemoteProxy(url, process.env.PM_REMOTE_PROXY_URL);
   let response: Response;
   try {
-    response = await fetch(url, {
+    response = await fetch(target, {
       headers: { accept: "application/json" },
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     });

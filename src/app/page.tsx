@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { CategoryTabs, Pager, SortTabs } from "@/components/markets/browse-controls";
+import { Pager, SortTabs } from "@/components/markets/browse-controls";
 import { EventGrid, EventGridSkeleton } from "@/components/markets/event-grid";
 import { ErrorState } from "@/components/layout/error-state";
 import { getEvents } from "@/lib/polymarket/gamma";
@@ -25,7 +25,6 @@ async function Browse({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
 
   return (
     <div className="space-y-5">
-      <CategoryTabs current={params} />
       <SortTabs current={params} />
       {result.ok ? (
         <>

@@ -4,10 +4,10 @@ import type { PolyEvent } from "@/lib/polymarket/types";
 
 export function EventGrid({ events }: { events: readonly PolyEvent[] }) {
   if (events.length === 0) {
-    return <p className="py-16 text-center text-muted-foreground">No markets found.</p>;
+    return <p className="py-16 text-center text-body-sm text-base-content/60">No markets found.</p>;
   }
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {events.map((event) => (
         <EventCard key={event.id} event={event} />
       ))}
@@ -17,9 +17,9 @@ export function EventGrid({ events }: { events: readonly PolyEvent[] }) {
 
 export function EventGridSkeleton() {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {Array.from({ length: 12 }, (_, i) => (
-        <Skeleton key={i} className="h-44 rounded-xl" />
+        <Skeleton key={i} className="h-48 rounded-box" />
       ))}
     </div>
   );

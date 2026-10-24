@@ -8,10 +8,10 @@ export function ErrorState({
   message?: string;
 }) {
   return (
-    <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed py-16 text-center">
-      <AlertTriangle className="size-8 text-muted-foreground" />
-      <p className="font-medium">{title}</p>
-      <p className="max-w-md text-sm text-muted-foreground">{message}</p>
+    <div className="flex flex-col items-center gap-2 rounded-box border border-dashed py-16 text-center">
+      <AlertTriangle className="size-8 text-base-content/60" />
+      <p className="text-body font-semibold">{title}</p>
+      <p className="max-w-md text-body-sm text-base-content/60">{message}</p>
     </div>
   );
 }

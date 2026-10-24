@@ -38,7 +38,7 @@ export function ConfirmOrderDialog({
         <dl className="space-y-2 text-sm">
           {preview?.rows.map((row) => (
             <div key={row.label} className="flex justify-between">
-              <dt className="text-muted-foreground">{row.label}</dt>
+              <dt className="text-base-content/60">{row.label}</dt>
               <dd className="font-medium tabular-nums">{row.value}</dd>
             </div>
           ))}

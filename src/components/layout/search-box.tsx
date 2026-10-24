@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
 
 const MAX_QUERY_LENGTH = 100;
 
@@ -18,16 +17,19 @@ export function SearchBox() {
   };
 
   return (
-    <form onSubmit={onSubmit} className="relative w-full max-w-md" role="search">
-      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-      <Input
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        maxLength={MAX_QUERY_LENGTH}
-        placeholder="Search markets"
-        aria-label="Search markets"
-        className="pl-9"
-      />
+    <form onSubmit={onSubmit} className="w-full max-w-2xl" role="search">
+      <label className="input h-11 w-full border-none bg-base-200 text-body-sm">
+        <Search className="size-4 text-base-content/60" />
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          maxLength={MAX_QUERY_LENGTH}
+          placeholder="Search polymarkets..."
+          aria-label="Search markets"
+          className="grow"
+        />
+      </label>
     </form>
   );
 }

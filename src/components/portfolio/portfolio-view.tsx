@@ -1,6 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
+import { Stat } from "@/components/ui/stat";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PositionsTable } from "./positions-table";
 import { ActivityList } from "./activity-list";
@@ -31,15 +32,15 @@ export function PortfolioView({
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">{name || shortAddress(user)}</h1>
-          <p className="font-mono text-xs text-muted-foreground">{user}</p>
+          <h1 className="text-title">{name || shortAddress(user)}</h1>
+          <p className="font-mono text-caption text-base-content/60">{user}</p>
         </div>
         {headerExtra}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Stat label="Positions value" value={value.isLoading ? "…" : formatUsd(value.data)} />
-        {isOwner && <Stat label="Cash (pUSD)" value={cash === undefined ? "Enable trading to view" : formatUsd(cash)} />}
+        <StatCard label="Positions value" value={value.isLoading ? "…" : formatUsd(value.data)} />
+        {isOwner && <StatCard label="Cash (pUSD)" value={cash === undefined ? "Enable trading to view" : formatUsd(cash)} />}
       </div>
 
       <Tabs defaultValue="positions">
@@ -64,11 +65,10 @@ export function PortfolioView({
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <Card className="gap-1 p-4">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-2xl font-semibold tabular-nums">{value}</p>
+    <Card className="p-5">
+      <Stat label={label} value={value} />
     </Card>
   );
 }

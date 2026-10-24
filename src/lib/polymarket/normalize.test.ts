@@ -93,6 +93,13 @@ describe("normalizeMarket", () => {
   });
 });
 
+describe("normalizeMarket sportsMarketType", () => {
+  it("keeps Gamma's sportsMarketType and defaults to an empty string", () => {
+    expect(normalizeMarket({ ...rawMarket, sportsMarketType: "moneyline" }).sportsMarketType).toBe("moneyline");
+    expect(normalizeMarket(rawMarket).sportsMarketType).toBe("");
+  });
+});
+
 describe("normalizeEvent", () => {
   it("normalizes nested markets and sorts by Yes price", () => {
     const e = normalizeEvent({
@@ -113,6 +120,22 @@ describe("normalizeEvent", () => {
     expect(e.volume24hr).toBe(50);
     expect(e.tags[0]?.label).toBe("Politics");
     expect(e.isBinary).toBe(false);
+  });
+
+  it("puts moneyline markets first, in Gamma order, ahead of higher-priced markets", () => {
+    const e = normalizeEvent({
+      id: "9",
+      slug: "nba-lal-uta",
+      title: "Lakers vs. Jazz",
+      markets: [
+        { ...rawMarket, id: "home", sportsMarketType: "moneyline", outcomePrices: '["0.3","0.7"]' },
+        { ...rawMarket, id: "draw", sportsMarketType: "moneyline", outcomePrices: '["0.1","0.9"]' },
+        { ...rawMarket, id: "away", sportsMarketType: "moneyline", outcomePrices: '["0.6","0.4"]' },
+        { ...rawMarket, id: "spread", sportsMarketType: "spreads", outcomePrices: '["0.9","0.1"]' },
+        { ...rawMarket, id: "total", sportsMarketType: "totals", outcomePrices: '["0.5","0.5"]' },
+      ],
+    });
+    expect(e.markets.map((m) => m.id)).toEqual(["home", "draw", "away", "spread", "total"]);
   });
 
   it("flags single-market events as binary", () => {

@@ -11,6 +11,8 @@ export interface Market {
   readonly question: string;
   /** Short label used inside multi-market events (Gamma `groupItemTitle`). */
   readonly label: string;
+  /** Gamma `sportsMarketType`, e.g. "moneyline", "spreads", "totals"; "" for non-sports markets. */
+  readonly sportsMarketType: string;
   readonly slug: string;
   readonly conditionId: string;
   readonly image: string;
@@ -36,8 +38,18 @@ export interface Tag {
   readonly slug: string;
 }
 
+/** Sports team from Gamma event `teams`. */
+export interface Team {
+  readonly name: string;
+  readonly abbreviation: string;
+  readonly color: string;
+  readonly logo: string;
+}
+
 export interface PolyEvent {
   readonly id: string;
+  /** Gamma `parentEventId` for a game's child events ("Exact Score", "More Markets", …); "" otherwise. */
+  readonly parentEventId: string;
   readonly slug: string;
   readonly title: string;
   readonly description: string;
@@ -51,6 +63,7 @@ export interface PolyEvent {
   readonly negRisk: boolean;
   readonly commentCount: number;
   readonly tags: readonly Tag[];
+  readonly teams: readonly Team[];
   readonly markets: readonly Market[];
   /** True when the event is a single Yes/No market. */
   readonly isBinary: boolean;

@@ -3,8 +3,8 @@
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Card, CardBody } from "@/components/ui/card";
+import { MarketImage } from "@/components/markets/market-image";
 import { TradeActionButton } from "./trade-action-button";
 import { ConfirmOrderDialog, type OrderPreview } from "./confirm-order-dialog";
 import { useTrading } from "./trading-provider";
@@ -15,10 +15,15 @@ import { describeOrderStatus } from "@/lib/trading/errors";
 import type { OrderSide } from "@/lib/trading/order-math";
 import type { OrderBook } from "@/lib/polymarket/orderbook";
 import type { Market } from "@/lib/polymarket/types";
+import { OutcomeButton, toneForIndex } from "@/components/ui/outcome-button";
+import { AmountInput, FieldRow, PriceStepper, QuickChips, SummaryLine } from "./trade-panel-parts";
+import { adjustAmount, maxBuyShares, QUICK_DOLLARS, QUICK_SHARES, stepLimitPrice } from "@/lib/trading/quick-amount";
 import { formatCents, formatUsd } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 interface Props {
+  eventTitle: string;
+  eventImage: string;
   market: Market;
   outcomeIndex: number;
   onOutcomeChange: (index: number) => void;
@@ -30,7 +35,7 @@ interface Props {
 type Confirmed = { ticket: OrderTicket; preview: OrderPreview };
 
 /** Keyed by token in the parent so the form resets when the outcome changes. */
-export function TradePanel({ market, outcomeIndex, onOutcomeChange, book, bookLive }: Props) {
+export function TradePanel({ eventTitle, eventImage, market, outcomeIndex, onOutcomeChange, book, bookLive }: Props) {
   const { client, status } = useTrading();
   const queryClient = useQueryClient();
   const [side, setSide] = useState<OrderSide>("BUY");
@@ -98,123 +103,128 @@ export function TradePanel({ market, outcomeIndex, onOutcomeChange, book, bookLi
     status !== "ready"
       ? null
       : side === "BUY"
-        ? `Balance: ${formatUsd(collateral.data)}`
-        : `You own: ${(position.data ?? 0).toFixed(2)} shares`;
+        ? `${formatUsd(collateral.data)} cash`
+        : `${(position.data ?? 0).toFixed(2)} shares owned`;
+
+  const isBuy = side === "BUY";
+  const dollarAmount = kind === "market" && isBuy;
+  const tickSize = book?.tickSize ?? market.tickSize;
+  const fallbackCents = Math.round(outcome.price * 100) || undefined;
+  const sharesMax = balanceKnown
+    ? () => (isBuy ? setShares(maxBuyShares(collateral.data, limitPriceCents)) : setShares(String(position.data ?? 0)))
+    : undefined;
 
   return (
-    <Card className="gap-4 p-4">
-      <p className="line-clamp-2 text-sm font-medium">{market.label}</p>
+    <Card>
+      <CardBody>
+        <div className="flex items-center gap-3">
+          <MarketImage src={eventImage} alt="" size={44} />
+          <div className="min-w-0">
+            <p className="truncate text-body-sm text-base-content/70">{eventTitle}</p>
+            <p className="truncate text-heading text-accent">{market.label === eventTitle ? outcome.name : market.label}</p>
+          </div>
+        </div>
 
-      <div className="flex items-center justify-between border-b">
-        <div className="flex">
-          {(["BUY", "SELL"] as const).map((s) => (
-            <TabButton key={s} active={side === s} onClick={() => setSide(s)}>
-              {s === "BUY" ? "Buy" : "Sell"}
-            </TabButton>
+        <div className="flex items-center justify-between border-b border-border">
+          <div role="tablist" className="tabs tabs-border">
+            {(["BUY", "SELL"] as const).map((s) => (
+              <TabButton key={s} active={side === s} onClick={() => setSide(s)}>
+                {s === "BUY" ? "Buy" : "Sell"}
+              </TabButton>
+            ))}
+          </div>
+          <select
+            value={kind}
+            onChange={(e) => setKind(e.target.value as OrderKind)}
+            className="select select-ghost select-sm w-auto text-body-sm font-semibold"
+            aria-label="Order type"
+          >
+            <option value="market">Market</option>
+            <option value="limit">Limit</option>
+          </select>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          {market.outcomes.slice(0, 2).map((o, i) => (
+            <OutcomeButton
+              key={o.tokenId}
+              look="solid"
+              size="lg"
+              tone={toneForIndex(i)}
+              selected={i === outcomeIndex}
+              onClick={() => onOutcomeChange(i)}
+              title={o.name}
+            >
+              <span className="truncate">{o.name}</span> {formatCents(o.price)}
+            </OutcomeButton>
           ))}
         </div>
-        <select
-          value={kind}
-          onChange={(e) => setKind(e.target.value as OrderKind)}
-          className="bg-transparent text-sm text-muted-foreground"
-          aria-label="Order type"
-        >
-          <option value="market">Market</option>
-          <option value="limit">Limit</option>
-        </select>
-      </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        {market.outcomes.slice(0, 2).map((o, i) => (
-          <button
-            key={o.tokenId}
-            type="button"
-            onClick={() => onOutcomeChange(i)}
-            className={cn(
-              "rounded-md py-2.5 text-sm font-semibold",
-              i === outcomeIndex
-                ? i === 0
-                  ? "bg-yes text-white"
-                  : "bg-no text-white"
-                : "bg-muted text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {o.name} {formatCents(o.price)}
-          </button>
-        ))}
-      </div>
+        {kind === "limit" ? (
+          <>
+            <FieldRow label="Limit price">
+              <PriceStepper
+                value={limitPriceCents}
+                onChange={setLimitPriceCents}
+                onStep={(dir) => setLimitPriceCents((v) => stepLimitPrice(v, tickSize, dir, fallbackCents))}
+              />
+            </FieldRow>
+            <FieldRow label="Shares" hint={balanceLabel}>
+              <AmountInput label="Shares" value={shares} onChange={setShares} />
+            </FieldRow>
+            <QuickChips deltas={QUICK_SHARES} format={signed} onAdd={(d) => setShares((v) => adjustAmount(v, d))} onMax={sharesMax} />
+          </>
+        ) : (
+          <>
+            <FieldRow label={dollarAmount ? "Amount" : "Shares"} hint={balanceLabel}>
+              <AmountInput label={dollarAmount ? "Amount in dollars" : "Shares"} prefix={dollarAmount ? "$" : undefined} value={amount} onChange={setAmount} />
+            </FieldRow>
+            <QuickChips
+              deltas={dollarAmount ? QUICK_DOLLARS : QUICK_SHARES}
+              format={dollarAmount ? (d) => `+$${d}` : signed}
+              onAdd={(d) => setAmount((v) => adjustAmount(v, d))}
+              onMax={balanceKnown ? () => setAmount(String((isBuy ? collateral.data : position.data) ?? 0)) : undefined}
+            />
+          </>
+        )}
 
-      {kind === "market" ? (
-        <Field label={side === "BUY" ? "Amount ($)" : "Shares"} hint={balanceLabel}>
-          <Input inputMode="decimal" placeholder="0" value={amount} onChange={(e) => setAmount(e.target.value)} />
-        </Field>
-      ) : (
-        <>
-          <Field label="Limit price (¢)">
-            <Input inputMode="decimal" placeholder="50" value={limitPriceCents} onChange={(e) => setLimitPriceCents(e.target.value)} />
-          </Field>
-          <Field label="Shares" hint={balanceLabel}>
-            <Input inputMode="decimal" placeholder="0" value={shares} onChange={(e) => setShares(e.target.value)} />
-          </Field>
-        </>
-      )}
+        <div className="space-y-1 border-t border-border pt-4">
+          <SummaryLine label={isBuy ? "Total" : "You'll receive"} value={formatUsd(isBuy ? (result.estimate?.cost ?? 0) : (result.estimate?.payout ?? 0))} tone="info" />
+          {isBuy && <SummaryLine label="To win" value={formatUsd(result.estimate?.payout ?? 0)} tone="yes" />}
+        </div>
+        {result.error && <p className="text-body-sm text-no">{result.error}</p>}
+        {staleBook && <p className="text-body-sm text-base-content/60">Reconnecting to live prices…</p>}
 
-      {result.estimate && (
-        <dl className="space-y-1 text-sm">
-          <Row label="Avg. price" value={formatCents(result.estimate.avgPrice)} />
-          <Row label="Shares" value={result.estimate.shares.toFixed(2)} />
-          <Row label={side === "BUY" ? "Payout if it wins" : "Proceeds"} value={formatUsd(result.estimate.payout)} highlight />
-        </dl>
-      )}
-      {result.error && <p className="text-sm text-no">{result.error}</p>}
-      {staleBook && <p className="text-sm text-muted-foreground">Reconnecting to live prices…</p>}
+        <TradeActionButton
+          label={`Place ${isBuy ? "buy" : "sell"} order`}
+          disabled={!market.tradable || !result.ticket || staleBook}
+          onSubmit={openConfirm}
+        />
+        {!market.tradable && <p className="text-center text-caption text-base-content/60">This market is not accepting orders.</p>}
 
-      <TradeActionButton
-        label={`${side === "BUY" ? "Buy" : "Sell"} ${outcome.name}`}
-        disabled={!market.tradable || !result.ticket || staleBook}
-        onSubmit={openConfirm}
-      />
-      {!market.tradable && <p className="text-center text-xs text-muted-foreground">This market is not accepting orders.</p>}
-
-      <ConfirmOrderDialog
-        preview={confirmed?.preview ?? null}
-        submitting={submitting}
-        onConfirm={submit}
-        onClose={() => setConfirmed(null)}
-      />
+        <ConfirmOrderDialog
+          preview={confirmed?.preview ?? null}
+          submitting={submitting}
+          onConfirm={submit}
+          onClose={() => setConfirmed(null)}
+        />
+      </CardBody>
     </Card>
   );
 }
+
+const signed = (d: number) => (d > 0 ? `+${d}` : String(d));
 
 function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       type="button"
+      role="tab"
+      aria-selected={active}
       onClick={onClick}
-      className={cn("-mb-px border-b-2 px-3 py-2 text-sm font-medium", active ? "border-foreground" : "border-transparent text-muted-foreground")}
+      className={cn("tab px-1 text-body font-semibold", active ? "tab-active" : "text-base-content/60")}
     >
       {children}
     </button>
-  );
-}
-
-function Field({ label, hint, children }: { label: string; hint?: string | null; children: React.ReactNode }) {
-  return (
-    <label className="block space-y-1.5">
-      <span className="flex justify-between text-xs text-muted-foreground">
-        <span>{label}</span>
-        {hint && <span>{hint}</span>}
-      </span>
-      {children}
-    </label>
-  );
-}
-
-function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className="flex justify-between">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className={cn("tabular-nums", highlight && "font-semibold text-yes")}>{value}</dd>
-    </div>
   );
 }

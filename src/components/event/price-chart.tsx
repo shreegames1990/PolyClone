@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { pmGet } from "@/lib/polymarket/client-fetch";
+import { PillButton } from "@/components/ui/pill";
 import { INTERVALS, mergeSeries, parsePriceHistory, type IntervalKey } from "@/lib/polymarket/price-history";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 
 export interface ChartSeries {
   readonly key: string;
@@ -14,7 +14,8 @@ export interface ChartSeries {
   readonly tokenId: string;
 }
 
-const COLORS = ["#2e5cff", "#27ae60", "#f2994a", "#bb6bd9"];
+// polymarket theme: primary blue, yes green, warning yellow, accent indigo (globals.css)
+const COLORS = ["#3e61f6", "#53bb5d", "#ffe44e", "#7171df"];
 
 const timeFormatter = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
 const tooltipFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" });
@@ -44,7 +45,7 @@ export function PriceChart({ series }: { series: readonly ChartSeries[] }) {
         {loading ? (
           <Skeleton className="h-full w-full" />
         ) : failed || rows.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+          <div className="flex h-full items-center justify-center text-sm text-base-content/60">
             {failed ? "Could not load price history." : "No price history yet."}
           </div>
         ) : (
@@ -89,17 +90,9 @@ export function PriceChart({ series }: { series: readonly ChartSeries[] }) {
       </div>
       <div className="flex gap-1">
         {INTERVALS.map((i) => (
-          <button
-            key={i.key}
-            type="button"
-            onClick={() => setInterval(i.key)}
-            className={cn(
-              "rounded-md px-2.5 py-1 text-xs text-muted-foreground hover:bg-accent",
-              interval === i.key && "bg-accent text-foreground",
-            )}
-          >
+          <PillButton key={i.key} size="xs" active={interval === i.key} onClick={() => setInterval(i.key)}>
             {i.label}
-          </button>
+          </PillButton>
         ))}
       </div>
     </div>

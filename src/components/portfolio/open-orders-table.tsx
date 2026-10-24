@@ -12,12 +12,12 @@ export function OpenOrdersTable() {
 
   if (isLoading) return <Skeleton className="h-32" />;
   if (isError) return <p className="py-8 text-center text-sm text-no">Could not load open orders.</p>;
-  if (!data?.length) return <p className="py-8 text-center text-sm text-muted-foreground">No open orders.</p>;
+  if (!data?.length) return <p className="py-8 text-center text-sm text-base-content/60">No open orders.</p>;
 
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <thead className="text-left text-xs text-muted-foreground">
+        <thead className="text-left text-xs text-base-content/60">
           <tr>
             <th className="py-2 font-normal">Side</th>
             <th className="py-2 font-normal">Outcome</th>

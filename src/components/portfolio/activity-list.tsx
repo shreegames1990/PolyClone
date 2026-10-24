@@ -13,7 +13,7 @@ export function ActivityList({ user }: { user: string }) {
 
   if (isLoading) return <Skeleton className="h-40" />;
   if (isError) return <p className="py-8 text-center text-sm text-no">Could not load activity.</p>;
-  if (!data?.length) return <p className="py-8 text-center text-sm text-muted-foreground">No activity yet.</p>;
+  if (!data?.length) return <p className="py-8 text-center text-sm text-base-content/60">No activity yet.</p>;
 
   return (
     <ul className="divide-y text-sm">
@@ -24,13 +24,13 @@ export function ActivityList({ user }: { user: string }) {
             <Link href={`/event/${a.eventSlug}`} className="line-clamp-1 hover:underline">
               {a.title}
             </Link>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-base-content/60">
               {a.type === "TRADE" ? `${a.side === "BUY" ? "Bought" : "Sold"} ${a.size.toFixed(2)} ${a.outcome} at ${formatCents(a.price)}` : a.type}
             </p>
           </div>
           <div className="text-right">
             <p className="tabular-nums">{formatUsd(a.usdcSize)}</p>
-            <p className="text-xs text-muted-foreground">{timeFormatter.format(a.timestamp)}</p>
+            <p className="text-xs text-base-content/60">{timeFormatter.format(a.timestamp)}</p>
           </div>
         </li>
       ))}

@@ -19,7 +19,7 @@ export default function SearchPage({ searchParams }: PageProps<"/search">) {
 async function Results({ searchParams }: Pick<PageProps<"/search">, "searchParams">) {
   const raw = (await searchParams).q;
   const query = querySchema.parse(Array.isArray(raw) ? raw[0] : raw);
-  if (!query) return <p className="text-muted-foreground">Type something to search.</p>;
+  if (!query) return <p className="py-16 text-center text-body-sm text-base-content/60">Type something to search.</p>;
 
   const result = await searchEvents(query).then(
     (events) => ({ ok: true as const, events }),
@@ -31,7 +31,7 @@ async function Results({ searchParams }: Pick<PageProps<"/search">, "searchParam
 
   return (
     <div className="space-y-5">
-      <h1 className="text-xl font-semibold">Results for “{query}”</h1>
+      <h1 className="text-title">Results for “{query}”</h1>
       {result.ok ? <EventGrid events={result.events} /> : <ErrorState />}
     </div>
   );

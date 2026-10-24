@@ -13,7 +13,7 @@ export function MarketImage({
   className?: string;
 }) {
   if (!src) {
-    return <div className={cn("shrink-0 rounded-md bg-muted", className)} style={{ width: size, height: size }} />;
+    return <div className={cn("shrink-0 rounded-md bg-base-300", className)} style={{ width: size, height: size }} />;
   }
   return (
     <Image
