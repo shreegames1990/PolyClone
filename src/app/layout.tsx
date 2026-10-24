@@ -17,11 +17,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" data-theme="polymarket" className={`${inter.variable} h-full antialiased`}>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
         <Providers>
           <SiteHeader />
-          <main className="mx-auto w-full max-w-7xl flex-1 px-4 pt-4 pb-8">{children}</main>
+          <main className="mx-auto w-full max-w-[90rem] flex-1 px-4 pt-4 pb-8">{children}</main>
         </Providers>
       </body>
     </html>

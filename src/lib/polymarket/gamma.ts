@@ -4,7 +4,8 @@ import { POLYMARKET_HOSTS } from "./config";
 import { fetchJson } from "./http";
 import { normalizeEvent } from "./normalize";
 import { buildEventLookupQuery, withoutChildEvents } from "./event-family";
-import { buildEventsQuery, type BrowseParams } from "./queries";
+import { buildEventsQuery, type BrowseParams, type EventFilter } from "./queries";
+import { parseRelatedTags, type RelatedTag } from "./groups";
 import type { PolyEvent } from "./types";
 
 const gammaUrl = (path: string, query = "") =>
@@ -19,10 +20,10 @@ export interface EventPage {
   readonly nextCursor: string | null;
 }
 
-export async function getEvents(params: BrowseParams): Promise<EventPage> {
+export async function getEvents(params: BrowseParams, filter?: EventFilter): Promise<EventPage> {
   "use cache";
   cacheLife("seconds");
-  const raw = await fetchJson(gammaUrl("events/keyset", buildEventsQuery(params, Date.now())));
+  const raw = await fetchJson(gammaUrl("events/keyset", buildEventsQuery(params, Date.now(), filter)));
   const page = keysetSchema.parse(raw);
   return { events: withoutChildEvents(page.events.map(normalizeEvent)), nextCursor: page.next_cursor ?? null };
 }
@@ -66,4 +67,12 @@ export async function searchEvents(query: string): Promise<PolyEvent[]> {
   const params = new URLSearchParams({ q: query, limit_per_type: "20", events_status: "active" });
   const raw = await fetchJson(gammaUrl("public-search", params.toString()));
   return withoutChildEvents(searchSchema.parse(raw).events.map(normalizeEvent));
+}
+
+/** Sidebar subgroups for a group: Gamma's active related tags, in Gamma's order. */
+export async function getRelatedTags(tagId: string): Promise<RelatedTag[]> {
+  "use cache";
+  cacheLife("hours");
+  const query = new URLSearchParams({ status: "active", omit_empty: "true" }).toString();
+  return parseRelatedTags(await fetchJson(gammaUrl(`tags/${tagId}/related-tags/tags`, query)));
 }

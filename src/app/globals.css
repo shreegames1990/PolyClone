@@ -16,10 +16,12 @@
  * base-100 page, base-200 cards/fields, base-300 hover/dividers,
  * primary blue (Deposit), secondary indigo (selected outcome, place order),
  * success/error solid Yes/No buttons. Bright Yes/No text uses text-yes / text-no.
+ * Used when chosen in the theme switcher, or by default when the OS is in dark mode.
  */
 @plugin "daisyui/theme" {
   name: "polymarket";
-  default: true;
+  default: false;
+  prefersdark: true;
   color-scheme: dark;
   --color-base-100: #0c0e13;
   --color-base-200: #1d1f26;
@@ -49,8 +51,54 @@
   --border: 1px;
   --depth: 1;
   --noise: 0;
+  --yes: #53bb5d;
+  --no: #ed3124;
+  --muted-foreground: #92959d;
 }
 
+/*
+ * "polymarket-light": same accents on a white page. base-200 is the light gray
+ * card/field color; Yes/No text is darker so it reads on white.
+ * Default when no theme is chosen and the OS is in light mode.
+ */
+@plugin "daisyui/theme" {
+  name: "polymarket-light";
+  default: true;
+  color-scheme: light;
+  --color-base-100: #ffffff;
+  --color-base-200: #f3f4f6;
+  --color-base-300: #e4e6ea;
+  --color-base-content: #0f1115;
+  --color-primary: #3e61f6;
+  --color-primary-content: #ffffff;
+  --color-secondary: #444484;
+  --color-secondary-content: #ffffff;
+  --color-accent: #5b5bd6;
+  --color-accent-content: #ffffff;
+  --color-neutral: #e4e6ea;
+  --color-neutral-content: #0f1115;
+  --color-info: #3e61f6;
+  --color-info-content: #ffffff;
+  --color-success: #33752f;
+  --color-success-content: #ffffff;
+  --color-warning: #f59f00;
+  --color-warning-content: #0f1115;
+  --color-error: #c92416;
+  --color-error-content: #ffffff;
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 1rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+  --yes: #2f9e44;
+  --no: #d9381e;
+  --muted-foreground: #6b7280;
+}
+
+/* `dark:` follows the resolved daisyUI theme (next-themes sets data-theme, including for "system"). */
 @custom-variant dark (&:where([data-theme=polymarket], [data-theme=polymarket] *));
 
 /* Type scale: text-display / title / heading / body / body-sm / label / caption. */
@@ -110,9 +158,6 @@
 }
 
 :root {
-  --yes: #53bb5d;
-  --no: #ed3124;
-  --muted-foreground: #92959d;
   --line: color-mix(in oklab, var(--color-base-content) 9%, transparent);
   --radius: var(--radius-field);
 }

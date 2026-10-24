@@ -7,11 +7,12 @@ import { BarChart3 } from "lucide-react";
 import { SearchBox } from "./search-box";
 import { NavLinks, StaticNavLinks } from "./nav-links";
 import { CategoryNav, StaticCategoryNav } from "./category-nav";
+import { ThemeSwitcher } from "./theme-switcher";
 
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-base-100/95 backdrop-blur-md">
-      <div className="mx-auto max-w-7xl px-4">
+      <div className="mx-auto max-w-[90rem] px-4">
         <div className="flex h-16 items-center gap-3 sm:gap-6">
           <Link href="/" className="flex shrink-0 items-center gap-2">
             <span className="flex size-8 items-center justify-center rounded-field bg-primary">
@@ -25,7 +26,8 @@ export function SiteHeader() {
               <NavLinks />
             </Suspense>
           </nav>
-          <div className="ml-auto shrink-0 md:ml-0">
+          <div className="ml-auto flex shrink-0 items-center gap-2 md:ml-0">
+            <ThemeSwitcher />
             <ConnectButton chainStatus="icon" showBalance={false} accountStatus="address" />
           </div>
         </div>

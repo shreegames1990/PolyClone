@@ -14,8 +14,8 @@ export interface ChartSeries {
   readonly tokenId: string;
 }
 
-// polymarket theme: primary blue, yes green, warning yellow, accent indigo (globals.css)
-const COLORS = ["#3e61f6", "#53bb5d", "#ffe44e", "#7171df"];
+// Theme accents that read on both light and dark: primary blue, yes green, orange, indigo.
+const COLORS = ["#3e61f6", "#3fae4d", "#f59f00", "#6b6bdc"];
 
 const timeFormatter = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
 const tooltipFormatter = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" });

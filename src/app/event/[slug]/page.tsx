@@ -7,6 +7,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getChildEvents, getEventById, getEventBySlug } from "@/lib/polymarket/gamma";
 import { buildGameTabs, hasSportsMarkets, isChildEvent, type GameTab } from "@/lib/polymarket/event-family";
 import type { PolyEvent } from "@/lib/polymarket/types";
+import { GroupSidebar } from "@/components/groups/group-sidebar";
+import { activeSportsPath, findGroup } from "@/lib/polymarket/groups";
+import { SPORTS_TAG_ID } from "@/lib/polymarket/queries";
 
 const slugSchema = z.string().regex(/^[a-z0-9-]{1,200}$/i);
 
@@ -42,7 +45,20 @@ async function EventContent({ params, searchParams }: PageProps<"/event/[slug]">
   };
 
   const tabs = await loadGameTabs(event);
-  return <EventView event={event} initial={initial} tabs={tabs} />;
+  const view = <EventView event={event} initial={initial} tabs={tabs} />;
+  const sports = findGroup("sports");
+  const tagIds = event.tags.map((t) => t.id);
+  if (!sports || !tagIds.includes(SPORTS_TAG_ID)) return view;
+
+  // Sports events keep the sports sidebar, with the event's league highlighted (polymarket.com layout).
+  return (
+    <div className="xl:grid xl:grid-cols-[13rem_1fr] xl:gap-6">
+      <aside className="hidden xl:sticky xl:top-[calc(var(--spacing-header)+1rem)] xl:block xl:max-h-[calc(100dvh-var(--spacing-header)-2rem)] xl:self-start xl:overflow-y-auto">
+        <GroupSidebar group={sports} activeSub={activeSportsPath(tagIds) ?? undefined} />
+      </aside>
+      <div className="min-w-0">{view}</div>
+    </div>
+  );
 }
 
 /** Tabs for a game's main and child events. Optional: failures only hide the tabs. */

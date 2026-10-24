@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Sparkles, TrendingUp } from "lucide-react";
-import { browseHref, CATEGORIES, parseBrowseParams } from "@/lib/polymarket/queries";
+import { browseHref, parseBrowseParams } from "@/lib/polymarket/queries";
+import { GROUPS, subgroupHref } from "@/lib/polymarket/groups";
 import { cn } from "@/lib/utils";
 
-const TOPICS = CATEGORIES.filter((c) => c.slug !== "");
 
 const linkClass =
   "-mb-px flex shrink-0 items-center gap-1.5 border-b-2 py-3 text-body-sm font-medium transition-colors";
@@ -21,32 +21,36 @@ function NavItem({ href, active, children }: { href: string; active: boolean; ch
   );
 }
 
-function Items({ tag, sort, onHome }: { tag: string; sort: string; onHome: boolean }) {
+function Items({ sort, pathname }: { sort: string; pathname: string }) {
+  const onHome = pathname === "/";
   return (
     <>
-      <NavItem href={browseHref({})} active={onHome && !tag && sort === "trending"}>
+      <NavItem href={browseHref({})} active={onHome && sort === "trending"}>
         <TrendingUp className="size-4" /> Trending
       </NavItem>
-      <NavItem href={browseHref({ sort: "new" })} active={onHome && !tag && sort === "new"}>
+      <NavItem href={browseHref({ sort: "new" })} active={onHome && sort === "new"}>
         <Sparkles className="size-4" /> New
       </NavItem>
       <span aria-hidden className="my-3 w-px shrink-0 bg-base-300" />
-      {TOPICS.map((c) => (
-        <NavItem key={c.slug} href={browseHref({ tag: c.slug })} active={onHome && tag === c.slug}>
-          {c.label}
-        </NavItem>
-      ))}
+      {GROUPS.map((g) => {
+        const href = subgroupHref(g.slug);
+        return (
+          <NavItem key={g.slug} href={href} active={pathname === href || pathname.startsWith(`${href}/`)}>
+            {g.label}
+          </NavItem>
+        );
+      })}
     </>
   );
 }
 
-/** Second header row: Trending, New, then topic categories (Polymarket layout). */
+/** Second header row: Trending, New, then the groups (Polymarket layout). */
 export function CategoryNav() {
   const params = parseBrowseParams(Object.fromEntries(useSearchParams()));
-  return <Items tag={params.tag} sort={params.sort} onHome={usePathname() === "/"} />;
+  return <Items sort={params.sort} pathname={usePathname()} />;
 }
 
 /** Suspense fallback before search params are known. */
 export function StaticCategoryNav() {
-  return <Items tag="" sort="" onHome={false} />;
+  return <Items sort="" pathname="" />;
 }

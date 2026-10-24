@@ -22,6 +22,14 @@ describe("buildUpstreamUrl", () => {
     expect(buildUpstreamUrl("data", ["positions"], "")).toBeNull();
   });
 
+  it("allows Gamma related tags for a numeric tag id only", () => {
+    expect(buildUpstreamUrl("gamma", ["tags", "2", "related-tags", "tags"], "?status=active")?.pathname).toBe(
+      "/tags/2/related-tags/tags",
+    );
+    expect(buildUpstreamUrl("gamma", ["tags", "abc", "related-tags", "tags"], "")).toBeNull();
+    expect(buildUpstreamUrl("gamma", ["tags", "2", "related-tags"], "")).toBeNull();
+  });
+
   it("clamps oversized or invalid limits", () => {
     expect(buildUpstreamUrl("gamma", ["events"], "?limit=100000")?.searchParams.get("limit")).toBe("100");
     expect(buildUpstreamUrl("gamma", ["events"], "?limit=abc")?.searchParams.get("limit")).toBe("100");

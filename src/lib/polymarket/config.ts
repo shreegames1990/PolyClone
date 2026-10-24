@@ -11,11 +11,12 @@ export const POLYGON_CHAIN_ID = 137;
 export type PolymarketService = keyof typeof POLYMARKET_HOSTS;
 
 /**
- * Read-only upstream paths the browser may reach through our proxy.
- * Each entry matches the exact path or the path followed by "/<segment>".
+ * Read-only upstream paths reachable through our proxy.
+ * A plain entry matches the exact path or the path followed by "/<segment>".
+ * An entry with ":id" matches that exact shape, with ":id" a numeric segment.
  */
 export const PROXY_ALLOWLIST: Record<PolymarketService, readonly string[]> = {
-  gamma: ["events", "events/slug", "markets", "tags", "public-search", "public-profile"],
+  gamma: ["events", "events/slug", "markets", "tags", "tags/:id/related-tags/tags", "public-search", "public-profile"],
   data: ["v2/positions", "v2/activity", "v2/value", "v2/trades", "v2/holders"],
   clob: ["book", "prices-history", "midpoint", "price", "spread"],
 };

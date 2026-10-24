@@ -68,3 +68,38 @@ describe("browseHref", () => {
     expect(browseHref({ tag: "crypto", sort: "volume", cursor: "abc" })).toBe("/?tag=crypto&sort=volume&cursor=abc");
   });
 });
+
+describe("buildEventsQuery filters", () => {
+  const base = { sort: "trending", tag: "", cursor: "" } as const;
+
+  it("filters by tag id, overriding the tag slug", () => {
+    const q = new URLSearchParams(buildEventsQuery({ ...base, tag: "crypto" }, NOW, { kind: "tag", tagId: "780" }));
+    expect(q.get("tag_id")).toBe("780");
+    expect(q.has("tag_slug")).toBe(false);
+  });
+
+  it("filters by tag slug", () => {
+    const q = new URLSearchParams(buildEventsQuery(base, NOW, { kind: "slug", slug: "trump" }));
+    expect(q.get("tag_slug")).toBe("trump");
+  });
+
+  it("finds live games that ended no more than 6 hours ago", () => {
+    const q = new URLSearchParams(buildEventsQuery(base, NOW, { kind: "live" }));
+    expect(q.get("tag_id")).toBe("100639");
+    expect(q.get("live")).toBe("true");
+    expect(q.get("end_date_min")).toBe("2026-10-19T15:00:00.000Z");
+  });
+
+  it("finds sports futures by excluding games", () => {
+    const q = new URLSearchParams(buildEventsQuery(base, NOW, { kind: "futures" }));
+    expect(q.get("tag_id")).toBe("1");
+    expect(q.get("exclude_tag_id")).toBe("100639");
+  });
+});
+
+describe("browseHref with a base path", () => {
+  it("prefixes the group path", () => {
+    expect(browseHref({ sort: "volume" }, "/sports/la-liga")).toBe("/sports/la-liga?sort=volume");
+    expect(browseHref({}, "/politics")).toBe("/politics");
+  });
+});
