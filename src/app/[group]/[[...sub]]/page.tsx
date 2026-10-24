@@ -48,7 +48,7 @@ async function GroupContent({ params, searchParams }: PageProps<"/[group]/[[...s
   );
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[15rem_1fr]">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[15rem_1fr]">
       <aside className="hidden lg:sticky lg:top-[calc(var(--spacing-header)+1rem)] lg:block lg:max-h-[calc(100dvh-var(--spacing-header)-2rem)] lg:self-start lg:overflow-y-auto">
         <GroupSidebar group={group} activeSub={activeSub} related={related} />
       </aside>

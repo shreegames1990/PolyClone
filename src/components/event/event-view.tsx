@@ -6,6 +6,7 @@ import { MarketList, type Selection } from "./market-list";
 import { MarketDetail } from "./market-detail";
 import { MoneylineSelector } from "./moneyline-selector";
 import { GameTabs } from "./game-tabs";
+import { MobileTradeBar, TRADE_PANEL_ID } from "./mobile-trade-bar";
 import { TradePanel } from "@/components/trading/trade-panel";
 import { MarketImage } from "@/components/markets/market-image";
 import { OutcomeButton, toneForIndex } from "@/components/ui/outcome-button";
@@ -63,7 +64,7 @@ export function EventView({
   );
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+    <div className="grid grid-cols-1 gap-6 pb-24 lg:grid-cols-[1fr_380px] lg:pb-0">
       <div className="min-w-0 space-y-3">
         <header className="flex items-center gap-3">
           <MarketImage src={event.image} alt="" size={40} className="rounded-field" />
@@ -94,7 +95,10 @@ export function EventView({
         )}
       </div>
 
-      <aside className="lg:sticky lg:top-[calc(var(--spacing-header)+1rem)] lg:self-start">
+      <aside
+        id={TRADE_PANEL_ID}
+        className="scroll-mt-[calc(var(--spacing-header)+1rem)] lg:sticky lg:top-[calc(var(--spacing-header)+1rem)] lg:self-start"
+      >
         <TradePanel
           key={outcome?.tokenId ?? market.id}
           eventTitle={event.title}
@@ -106,6 +110,8 @@ export function EventView({
           bookLive={status === "live"}
         />
       </aside>
+
+      <MobileTradeBar market={market} onPick={(outcomeIndex) => select(market.id, outcomeIndex)} />
     </div>
   );
 }

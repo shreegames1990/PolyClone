@@ -26,9 +26,14 @@ export function SiteHeader() {
               <NavLinks />
             </Suspense>
           </nav>
-          <div className="ml-auto flex shrink-0 items-center gap-2 md:ml-0">
+          <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2 md:ml-0">
             <ThemeSwitcher />
-            <ConnectButton chainStatus="icon" showBalance={false} accountStatus="address" />
+            <ConnectButton
+              label="Connect"
+              showBalance={false}
+              chainStatus={{ smallScreen: "none", largeScreen: "icon" }}
+              accountStatus={{ smallScreen: "avatar", largeScreen: "address" }}
+            />
           </div>
         </div>
         <nav aria-label="Categories" className="-mx-4 flex gap-6 overflow-x-auto px-4">

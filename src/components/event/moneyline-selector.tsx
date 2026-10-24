@@ -25,7 +25,7 @@ export function MoneylineSelector({
             onClick={() => onSelect(o.marketId)}
             style={selected && o.color ? { backgroundColor: o.color } : undefined}
             className={cn(
-              "btn h-10 min-h-10 border-none text-body-sm font-semibold uppercase tabular-nums",
+              "btn h-10 min-h-10 gap-1 border-none px-2 text-label font-semibold uppercase tabular-nums sm:text-body-sm",
               selected ? "bg-secondary text-secondary-content" : "bg-base-300/60 text-base-content/60 hover:bg-base-300",
             )}
           >

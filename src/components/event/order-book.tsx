@@ -12,7 +12,8 @@ const VISIBLE_LEVELS = 6;
 /** Row height in rem; matches the h-7 rows below. */
 const ROW_REM = 1.75;
 const HALF_STYLE = { maxHeight: `${VISIBLE_LEVELS * ROW_REM}rem` };
-const GRID = "grid grid-cols-[1fr_5rem_6rem_7rem] items-center gap-2 px-4";
+const GRID =
+  "grid grid-cols-[1fr_3.25rem_4.75rem_5.5rem] items-center gap-1.5 px-3 sm:grid-cols-[1fr_5rem_6rem_7rem] sm:gap-2 sm:px-4";
 
 export function OrderBook({
   book,
@@ -35,8 +36,8 @@ export function OrderBook({
   return (
     <div data-slot="order-book" className="text-label tabular-nums">
       <div className={cn(GRID, "h-8 border-b border-border text-caption font-medium uppercase tracking-wide text-base-content/60")}>
-        <span className="flex items-center gap-2">
-          Trade {tradeLabel} <StatusDot status={status} />
+        <span className="flex min-w-0 items-center gap-2 whitespace-nowrap">
+          <span className="truncate">Trade {tradeLabel}</span> <StatusDot status={status} />
         </span>
         <span className="text-right">Price</span>
         <span className="text-right">Shares</span>

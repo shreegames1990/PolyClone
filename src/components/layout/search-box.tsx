@@ -17,7 +17,7 @@ export function SearchBox() {
   };
 
   return (
-    <form onSubmit={onSubmit} className="w-full max-w-2xl" role="search">
+    <form onSubmit={onSubmit} className="min-w-0 flex-1 md:max-w-2xl" role="search">
       <label className="input h-11 w-full border-none bg-base-200 text-body-sm">
         <Search className="size-4 text-base-content/60" />
         <input
@@ -25,7 +25,7 @@ export function SearchBox() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           maxLength={MAX_QUERY_LENGTH}
-          placeholder="Search polymarkets..."
+          placeholder="Search"
           aria-label="Search markets"
           className="grow"
         />
