@@ -7,6 +7,8 @@ import { MarketDetail } from "./market-detail";
 import { MoneylineSelector } from "./moneyline-selector";
 import { GameTabs } from "./game-tabs";
 import { MobileTradeBar, TRADE_PANEL_ID } from "./mobile-trade-bar";
+import { PositionsCard } from "./positions-card";
+import type { OrderSide } from "@/lib/trading/order-math";
 import { TradePanel } from "@/components/trading/trade-panel";
 import { MarketImage } from "@/components/markets/market-image";
 import { OutcomeButton, toneForIndex } from "@/components/ui/outcome-button";
@@ -28,6 +30,8 @@ export function EventView({
   tabs: readonly GameTab[];
 }) {
   const [selection, setSelection] = useState<Selection>(initial);
+  // Bumping `nonce` remounts the trade panel on the requested side (Sell from a position row).
+  const [sideRequest, setSideRequest] = useState<{ side: OrderSide; nonce: number }>({ side: "BUY", nonce: 0 });
   const market = event.markets.find((m) => m.id === selection.marketId) ?? event.markets[0];
   const outcome = market?.outcomes[selection.outcomeIndex] ?? market?.outcomes[0];
 
@@ -53,7 +57,15 @@ export function EventView({
 
   if (!market) return <p className="py-16 text-center text-body-sm text-base-content/60">This event has no markets.</p>;
 
-  const select = (marketId: string, outcomeIndex = 0) => setSelection({ marketId, outcomeIndex });
+  const select = (marketId: string, outcomeIndex = 0) => {
+    setSelection({ marketId, outcomeIndex });
+    setSideRequest((r) => (r.side === "BUY" ? r : { side: "BUY", nonce: r.nonce + 1 }));
+  };
+  const sell = (marketId: string, outcomeIndex: number) => {
+    setSelection({ marketId, outcomeIndex });
+    setSideRequest((r) => ({ side: "SELL", nonce: r.nonce + 1 }));
+    document.getElementById(TRADE_PANEL_ID)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   const header = isMoneyline ? (
     <MoneylineHeader
       volume={event.markets.filter((m) => moneylineIds.has(m.id)).reduce((sum, m) => sum + m.volume, 0)}
@@ -79,6 +91,8 @@ export function EventView({
 
         <GameTabs tabs={tabs} currentSlug={event.slug} />
 
+        <PositionsCard event={event} onSell={sell} />
+
         <MarketDetail
           key={market.id}
           header={header}
@@ -91,7 +105,7 @@ export function EventView({
         />
 
         {!event.isBinary && otherMarkets.length > 0 && (
-          <MarketList markets={otherMarkets} selection={selection} onSelect={setSelection} />
+          <MarketList markets={otherMarkets} selection={selection} onSelect={(s) => select(s.marketId, s.outcomeIndex)} />
         )}
       </div>
 
@@ -100,12 +114,13 @@ export function EventView({
         className="scroll-mt-[calc(var(--spacing-header)+1rem)] lg:sticky lg:top-[calc(var(--spacing-header)+1rem)] lg:self-start"
       >
         <TradePanel
-          key={outcome?.tokenId ?? market.id}
+          key={`${outcome?.tokenId ?? market.id}-${sideRequest.nonce}`}
+          initialSide={sideRequest.side}
           eventTitle={event.title}
           eventImage={event.icon}
           market={market}
           outcomeIndex={selection.outcomeIndex}
-          onOutcomeChange={(outcomeIndex) => select(market.id, outcomeIndex)}
+          onOutcomeChange={(outcomeIndex) => setSelection({ marketId: market.id, outcomeIndex })}
           book={outcome ? books[outcome.tokenId] : undefined}
           bookLive={status === "live"}
         />

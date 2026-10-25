@@ -27,6 +27,9 @@ export function describeTradeError(error: unknown): string {
   ) {
     return "Signature cancelled in your wallet.";
   }
+  if (/gasless transactions require|relayer api key|builder api key/.test(lower)) {
+    return "Gasless approvals are not set up on this site yet: the server needs POLY_BUILDER_* credentials.";
+  }
   if (obj.status === 403 || /restricted|geoblock|region/.test(lower)) {
     return "Polymarket does not allow trading from your region.";
   }

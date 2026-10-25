@@ -30,15 +30,26 @@ interface Props {
   book: OrderBook | undefined;
   /** Market orders are priced from the live book, so they need a live socket. */
   bookLive: boolean;
+  /** Side the form opens on (e.g. "SELL" from a position's Sell button). */
+  initialSide?: OrderSide;
 }
 
 type Confirmed = { ticket: OrderTicket; preview: OrderPreview };
 
 /** Keyed by token in the parent so the form resets when the outcome changes. */
-export function TradePanel({ eventTitle, eventImage, market, outcomeIndex, onOutcomeChange, book, bookLive }: Props) {
+export function TradePanel({
+  eventTitle,
+  eventImage,
+  market,
+  outcomeIndex,
+  onOutcomeChange,
+  book,
+  bookLive,
+  initialSide = "BUY",
+}: Props) {
   const { client, status } = useTrading();
   const queryClient = useQueryClient();
-  const [side, setSide] = useState<OrderSide>("BUY");
+  const [side, setSide] = useState<OrderSide>(initialSide);
   const [kind, setKind] = useState<OrderKind>("market");
   const [amount, setAmount] = useState("");
   const [limitPriceCents, setLimitPriceCents] = useState("");

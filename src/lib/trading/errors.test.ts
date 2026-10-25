@@ -7,6 +7,15 @@ const response = (value: object) => value as unknown as OrderResponse;
 const named = (name: string, message = "x", extra: object = {}) => Object.assign(new Error(message), { name, ...extra });
 
 describe("describeTradeError", () => {
+  it("explains when gasless approvals need a relayer or builder key", () => {
+    const error = Object.assign(new Error("Gasless transactions require a Relayer API Key or Builder API Key in the client configuration."), {
+      name: "InvariantError",
+    });
+    expect(describeTradeError(error)).toBe(
+      "Gasless approvals are not set up on this site yet: the server needs POLY_BUILDER_* credentials.",
+    );
+  });
+
   it("detects user rejection", () => {
     expect(describeTradeError({ code: 4001, message: "x" })).toMatch(/cancelled/);
     expect(describeTradeError(new Error("User rejected the request."))).toMatch(/cancelled/);

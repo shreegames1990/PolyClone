@@ -43,7 +43,10 @@ export function useTradingApprovals() {
       toast.success("Trading approvals confirmed.");
       return queryClient.invalidateQueries({ queryKey: ["approvals", tradingAddress] });
     },
-    onError: (error) => toast.error(describeTradeError(error)),
+    onError: (error) => {
+      console.error("[trading] approvals failed", error);
+      toast.error(describeTradeError(error));
+    },
   });
   return { state, approve };
 }

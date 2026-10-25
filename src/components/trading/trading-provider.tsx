@@ -11,6 +11,7 @@ import type { Address } from "viem";
 import { POLYGON_CHAIN_ID } from "@/lib/polymarket/config";
 import { fetchProfile, type PolymarketProfile } from "@/lib/trading/profile";
 import { describeTradeError } from "@/lib/trading/errors";
+import { resolveBuilderAuth } from "@/lib/trading/builder-client";
 
 export type WalletMode = "proxy" | "eoa";
 
@@ -100,8 +101,14 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       if (chainId !== POLYGON_CHAIN_ID) await switchChainAsync({ chainId: POLYGON_CHAIN_ID });
       // Read the wallet client fresh: one captured before a chain switch would be stale.
       const walletClient = await getWalletClient(wagmiConfig, { chainId: POLYGON_CHAIN_ID });
+      // Builder signing enables gasless approvals for Polymarket proxy wallets (see /api/builder/sign).
+      const apiKey = await resolveBuilderAuth();
       // Always pass `wallet`: omitting it makes the SDK use (and deploy) a new Deposit Wallet.
-      const secure = await createSecureClient({ signer: signerFrom(walletClient), wallet: tradingAddress });
+      const secure = await createSecureClient({
+        signer: signerFrom(walletClient),
+        wallet: tradingAddress,
+        ...(apiKey ? { apiKey } : {}),
+      });
       setSession({ key: sessionKey, client: secure });
     } catch (error) {
       console.error("[trading] enable failed", error);
