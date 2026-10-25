@@ -21,4 +21,5 @@ export const PROXY_ALLOWLIST: Record<PolymarketService, readonly string[]> = {
   clob: ["book", "prices-history", "midpoint", "price", "spread"],
 };
 
-export const UPSTREAM_TIMEOUT_MS = 10_000;
+/** Gamma list queries can take 15-25s on a cache miss; give them room before failing. */
+export const UPSTREAM_TIMEOUT_MS = 20_000;

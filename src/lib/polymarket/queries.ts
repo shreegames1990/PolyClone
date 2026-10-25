@@ -66,6 +66,9 @@ function applyFilter(query: URLSearchParams, filter: EventFilter, now: number): 
       query.set("tag_id", GAMES_TAG_ID);
       query.set("live", "true");
       query.set("end_date_min", floorToHour(now - LIVE_GRACE_MS));
+      // Gamma takes 10-25s to order the games tag server-side; the page is sorted locally instead.
+      query.delete("order");
+      query.delete("ascending");
       break;
     case "futures":
       query.set("tag_id", SPORTS_TAG_ID);

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { POLYMARKET_HOSTS } from "./config";
 import { fetchJson } from "./http";
 import { normalizeEvent } from "./normalize";
-import { buildEventLookupQuery, withoutChildEvents } from "./event-family";
+import { buildEventLookupQuery, byVolume24hrDesc, withoutChildEvents } from "./event-family";
 import { buildEventsQuery, type BrowseParams, type EventFilter } from "./queries";
 import { parseRelatedTags, type RelatedTag } from "./groups";
 import type { PolyEvent } from "./types";
@@ -20,12 +20,18 @@ export interface EventPage {
   readonly nextCursor: string | null;
 }
 
+/**
+ * Browse lists. Gamma can take 15-25s on a cache miss for large tags, so lists are
+ * cached for minutes: visitors get the cached page while it refreshes in the background.
+ */
 export async function getEvents(params: BrowseParams, filter?: EventFilter): Promise<EventPage> {
   "use cache";
-  cacheLife("seconds");
+  cacheLife("minutes");
   const raw = await fetchJson(gammaUrl("events/keyset", buildEventsQuery(params, Date.now(), filter)));
   const page = keysetSchema.parse(raw);
-  return { events: withoutChildEvents(page.events.map(normalizeEvent)), nextCursor: page.next_cursor ?? null };
+  const events = withoutChildEvents(page.events.map(normalizeEvent));
+  // Live games are fetched unordered (see buildEventsQuery), so order this page here.
+  return { events: filter?.kind === "live" ? byVolume24hrDesc(events) : events, nextCursor: page.next_cursor ?? null };
 }
 
 /** Returns null when the slug does not exist. */

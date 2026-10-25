@@ -90,6 +90,12 @@ describe("buildEventsQuery filters", () => {
     expect(q.get("end_date_min")).toBe("2026-10-19T15:00:00.000Z");
   });
 
+  it("skips Gamma's slow server-side ordering for live games", () => {
+    const q = new URLSearchParams(buildEventsQuery(base, NOW, { kind: "live" }));
+    expect(q.has("order")).toBe(false);
+    expect(q.has("ascending")).toBe(false);
+  });
+
   it("finds sports futures by excluding games", () => {
     const q = new URLSearchParams(buildEventsQuery(base, NOW, { kind: "futures" }));
     expect(q.get("tag_id")).toBe("1");
