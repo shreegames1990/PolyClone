@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { BarChart3 } from "lucide-react";
 import { SearchBox } from "./search-box";
-import { NavLinks, StaticNavLinks } from "./nav-links";
+import { WalletSummary } from "./wallet-summary";
 import { CategoryNav, StaticCategoryNav } from "./category-nav";
 import { ThemeSwitcher } from "./theme-switcher";
 
@@ -21,12 +21,10 @@ export function SiteHeader() {
             <span className="hidden text-heading tracking-tight sm:inline">Polymarket Clone</span>
           </Link>
           <SearchBox />
-          <nav className="ml-auto hidden items-center gap-1 md:flex">
-            <Suspense fallback={<StaticNavLinks />}>
-              <NavLinks />
-            </Suspense>
-          </nav>
-          <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2 md:ml-0">
+          <div className="ml-auto hidden sm:block">
+            <WalletSummary />
+          </div>
+          <div className="ml-auto flex shrink-0 items-center gap-1 sm:ml-0 sm:gap-2">
             <ThemeSwitcher />
             <ConnectButton
               label="Connect"

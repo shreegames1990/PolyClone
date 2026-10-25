@@ -1,22 +1,26 @@
 import { OrderSide, OrderType, type SecureClient } from "@polymarket/client";
 import { describeTradeError, orderResultFromResponse, type OrderResult } from "./errors";
 import type { OrderSide as Side } from "./order-math";
+import { expirationFor, type ExpiryOption } from "./expiry";
 
 /** pUSD and outcome tokens both use 6 decimals. */
 const TOKEN_DECIMALS = 6;
 
 export type OrderTicket =
-  | { kind: "limit"; tokenId: string; side: Side; price: number; shares: number }
+  /** expiry other than "never" becomes a GTD order; the timestamp is computed at submit time. */
+  | { kind: "limit"; tokenId: string; side: Side; price: number; shares: number; expiry?: ExpiryOption }
   /** amount is pUSD for BUY and shares for SELL; worstPrice bounds slippage. */
   | { kind: "market"; tokenId: string; side: Side; amount: number; worstPrice: number };
 
 function submit(client: SecureClient, ticket: OrderTicket) {
   if (ticket.kind === "limit") {
+    const expiration = expirationFor(ticket.expiry ?? "never");
     return client.placeLimitOrder({
       tokenId: ticket.tokenId,
       side: ticket.side === "BUY" ? OrderSide.BUY : OrderSide.SELL,
       price: ticket.price,
       size: ticket.shares,
+      ...(expiration !== undefined ? { expiration } : {}),
     });
   }
   if (ticket.side === "BUY") {

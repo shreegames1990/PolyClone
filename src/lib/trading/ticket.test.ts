@@ -52,8 +52,8 @@ describe("buildTicket", () => {
   it("builds a limit order from cents and shares", () => {
     const t = buildTicket({ ...base, kind: "limit", limitPriceCents: "42", shares: "10" });
     expect(t.error).toBeNull();
-    expect(t.ticket).toEqual({ kind: "limit", tokenId: "T", side: "BUY", price: 0.42, shares: 10 });
-    expect(t.estimate).toEqual({ shares: 10, cost: 4.2, payout: 10, avgPrice: 0.42 });
+    expect(t.ticket).toEqual({ kind: "limit", tokenId: "T", side: "BUY", price: 0.42, shares: 10, expiry: "never" });
+    expect(t.estimate).toEqual({ shares: 10, cost: 4.2, payout: 10, avgPrice: 0.42, fee: 0 });
   });
 
   it("validates limit orders", () => {
@@ -78,6 +78,46 @@ describe("buildTicket", () => {
 
   it("skips the balance check when the balance is unknown", () => {
     expect(buildTicket({ ...base, available: undefined }).error).toBeNull();
+  });
+
+  it("includes the taker fee in the balance check for market buys", () => {
+    const fee = { rate: 0.05, exponent: 1, takerOnly: true };
+    // $100 at 50¢ costs a 2.5% fee ($2.50): $101 is not enough, $103 is.
+    expect(buildTicket({ ...base, amount: "100", available: 101, fee }).error).toBe("Not enough pUSD for this order.");
+    const ok = buildTicket({ ...base, amount: "100", available: 103, fee });
+    expect(ok.error).toBeNull();
+    expect(ok.estimate?.fee).toBeCloseTo(2.5);
+  });
+
+  it("includes the fee in the balance check for limit buys", () => {
+    const fee = { rate: 0.05, exponent: 1, takerOnly: true };
+    // 100 shares at 50¢ = $50 + 2.5% fee = $51.25
+    const t = buildTicket({ ...base, kind: "limit", limitPriceCents: "50", shares: "100", available: 51, fee });
+    expect(t.error).toBe("Not enough pUSD for this order.");
+    expect(buildTicket({ ...base, kind: "limit", limitPriceCents: "50", shares: "100", available: 52, fee }).estimate?.fee).toBeCloseTo(1.25);
+  });
+
+  it("lists the estimated fee in the confirmation preview", () => {
+    const fee = { rate: 0.05, exponent: 1, takerOnly: true };
+    const rows = buildTicket({ ...base, amount: "100", available: 1000, fee }).preview?.rows ?? [];
+    expect(rows).toContainEqual({ label: "Est. fee", value: "$2.50" });
+    expect(buildTicket(base).preview?.rows.some((r) => r.label === "Est. fee")).toBe(false);
+  });
+
+  it("reports no fee on markets without fees", () => {
+    expect(buildTicket(base).estimate?.fee).toBe(0);
+  });
+
+  it("carries the chosen expiry on limit tickets and shows it in the preview", () => {
+    const t = buildTicket({ ...base, kind: "limit", limitPriceCents: "42", shares: "10", expiry: "1d" });
+    expect(t.ticket).toMatchObject({ kind: "limit", expiry: "1d" });
+    expect(t.preview?.rows).toContainEqual({ label: "Expires", value: "1 day" });
+  });
+
+  it("stays quiet when only the prefilled limit price is set", () => {
+    const t = buildTicket({ ...base, kind: "limit", limitPriceCents: "63", shares: "" });
+    expect(t.error).toBeNull();
+    expect(t.ticket).toBeNull();
   });
 
   it("returns no error for an empty form", () => {

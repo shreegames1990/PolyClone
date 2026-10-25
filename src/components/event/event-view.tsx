@@ -8,6 +8,10 @@ import { MoneylineSelector } from "./moneyline-selector";
 import { GameTabs } from "./game-tabs";
 import { MobileTradeBar, TRADE_PANEL_ID } from "./mobile-trade-bar";
 import { PositionsCard } from "./positions-card";
+import { OpenOrdersCard } from "./open-orders-card";
+import { useOpenOrders } from "@/hooks/use-trading-data";
+import { restingPrices } from "@/lib/polymarket/event-orders";
+import { teamForSelection } from "@/lib/polymarket/teams";
 import type { OrderSide } from "@/lib/trading/order-math";
 import { TradePanel } from "@/components/trading/trade-panel";
 import { MarketImage } from "@/components/markets/market-image";
@@ -37,6 +41,14 @@ export function EventView({
 
   const tokenIds = useMemo(() => market?.outcomes.map((o) => o.tokenId) ?? [], [market]);
   const { books, status } = useLiveBooks(tokenIds);
+  const openOrders = useOpenOrders().data;
+  const resting = useMemo(
+    () =>
+      openOrders && outcome && market
+        ? restingPrices(openOrders, outcome.tokenId, { conditionId: market.conditionId, outcome: outcome.name })
+        : undefined,
+    [openOrders, outcome, market],
+  );
 
   const moneyline = useMemo(() => buildMoneylineOptions(event), [event]);
   const moneylineIds = useMemo(() => new Set(moneyline.map((o) => o.marketId)), [moneyline]);
@@ -91,6 +103,7 @@ export function EventView({
 
         <GameTabs tabs={tabs} currentSlug={event.slug} />
 
+        <OpenOrdersCard event={event} />
         <PositionsCard event={event} onSell={sell} />
 
         <MarketDetail
@@ -99,6 +112,7 @@ export function EventView({
           defaultTab={hasSportsMarkets(event) ? "book" : "graph"}
           tradeLabel={isMoneyline ? (moneyline.find((o) => o.marketId === market.id)?.label ?? "") : (outcome?.name ?? "")}
           book={outcome ? books[outcome.tokenId] : undefined}
+          resting={resting}
           status={status}
           series={series}
           description={event.description}
@@ -123,6 +137,7 @@ export function EventView({
           onOutcomeChange={(outcomeIndex) => setSelection({ marketId: market.id, outcomeIndex })}
           book={outcome ? books[outcome.tokenId] : undefined}
           bookLive={status === "live"}
+          team={outcome ? teamForSelection(event, market, outcome.name) : undefined}
         />
       </aside>
 

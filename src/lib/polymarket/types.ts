@@ -1,3 +1,5 @@
+import type { FeeSchedule } from "@/lib/trading/fees";
+
 export type TickSize = "0.1" | "0.01" | "0.001" | "0.0001";
 
 export interface Outcome {
@@ -30,6 +32,8 @@ export interface Market {
   readonly negRisk: boolean;
   readonly tickSize: TickSize;
   readonly minSize: number;
+  /** Taker fee schedule when the market charges fees; null otherwise. */
+  readonly fee: FeeSchedule | null;
 }
 
 export interface Tag {
@@ -42,6 +46,8 @@ export interface Tag {
 export interface Team {
   readonly name: string;
   readonly abbreviation: string;
+  /** Short name used as an outcome label in single-market moneylines ("Browns"); "" if none. */
+  readonly alias: string;
   readonly color: string;
   readonly logo: string;
 }

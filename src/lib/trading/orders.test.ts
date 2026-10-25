@@ -21,6 +21,21 @@ describe("placeOrder", () => {
     expect(fns.placeLimitOrder).toHaveBeenCalledWith({ tokenId: "T", side: OrderSide.BUY, price: 0.42, size: 10 });
   });
 
+  it("sends a GTD expiration for limit orders that expire", async () => {
+    const { client, fns } = fakeClient();
+    const before = Math.floor(Date.now() / 1000);
+    await placeOrder(client, { kind: "limit", tokenId: "T", side: "BUY", price: 0.42, shares: 10, expiry: "1h" });
+    const request = fns.placeLimitOrder.mock.calls[0]![0] as { expiration: number };
+    expect(request.expiration).toBeGreaterThanOrEqual(before + 3600);
+    expect(request.expiration).toBeLessThanOrEqual(before + 3602);
+  });
+
+  it("omits the expiration for good-till-cancelled limit orders", async () => {
+    const { client, fns } = fakeClient();
+    await placeOrder(client, { kind: "limit", tokenId: "T", side: "BUY", price: 0.42, shares: 10, expiry: "never" });
+    expect(fns.placeLimitOrder.mock.calls[0]![0]).not.toHaveProperty("expiration");
+  });
+
   it("places a FOK market buy capped at the worst price", async () => {
     const { client, fns } = fakeClient();
     await placeOrder(client, { kind: "market", tokenId: "T", side: "BUY", amount: 25, worstPrice: 0.6 });

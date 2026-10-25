@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { Pager, SortTabs } from "@/components/markets/browse-controls";
-import { EventGrid, EventGridSkeleton } from "@/components/markets/event-grid";
+import { SortTabs } from "@/components/markets/browse-controls";
+import { EventGridSkeleton } from "@/components/markets/event-grid";
+import { InfiniteEventGrid } from "@/components/markets/infinite-event-grid";
 import { ErrorState } from "@/components/layout/error-state";
 import { GroupSidebar } from "@/components/groups/group-sidebar";
 import { SubgroupChips } from "@/components/groups/subgroup-chips";
@@ -55,12 +56,16 @@ async function GroupContent({ params, searchParams }: PageProps<"/[group]/[[...s
       <section className="min-w-0 space-y-4">
         <h1 className="text-title">{resolved.label}</h1>
         <SubgroupChips group={group} activeSub={activeSub} related={related} />
-        <SortTabs current={browse} basePath={basePath} />
+        {/* Live is grouped by league and sorted by end time, so Gamma sort orders don't apply. */}
+        {resolved.filter.kind !== "live" && <SortTabs current={browse} basePath={basePath} />}
         {result.ok ? (
-          <>
-            <EventGrid events={result.events} />
-            <Pager current={browse} nextCursor={result.nextCursor} basePath={basePath} />
-          </>
+          <InfiniteEventGrid
+            key={`${basePath}|${browse.sort}|${browse.cursor}`}
+            initialEvents={result.events}
+            initialCursor={result.nextCursor}
+            query={{ group: group.slug, ...(activeSub ? { sub: activeSub } : {}), sort: browse.sort, tag: "" }}
+            groupBySport={resolved.filter.kind === "live"}
+          />
         ) : (
           <ErrorState />
         )}

@@ -22,13 +22,33 @@ describe("parseSignRequest", () => {
     expect(parseSignRequest({ method: "DELETE", path: "/cancel-all" }).ok).toBe(true);
     expect(parseSignRequest({ method: "POST", path: "/submit", body: "{}" }).ok).toBe(true);
     expect(parseSignRequest({ method: "GET", path: "/v1/account/transactions/0x12ab-cd" }).ok).toBe(true);
-    expect(parseSignRequest({ method: "GET", path: "/v1/account/transactions/params?address=0xabc&type=PROXY" }).ok).toBe(true);
+    expect(parseSignRequest({ method: "GET", path: "/v1/account/transactions/params" }).ok).toBe(true);
+  });
+
+  it("accepts API key setup and batch price requests made while enabling trading", () => {
+    expect(parseSignRequest({ method: "POST", path: "/auth/api-key" }).ok).toBe(true);
+    expect(parseSignRequest({ method: "DELETE", path: "/auth/api-key" }).ok).toBe(true);
+    expect(parseSignRequest({ method: "POST", path: "/books", body: "[]" }).ok).toBe(true);
+    expect(parseSignRequest({ method: "POST", path: "prices", body: "[]" }).ok).toBe(true);
+    expect(parseSignRequest({ method: "POST", path: "/last-trades-prices", body: "[]" }).ok).toBe(true);
+    expect(parseSignRequest({ method: "DELETE", path: "/notifications" }).ok).toBe(true);
+  });
+
+  it("accepts CLOB reads, which the SDK also builder-signs", () => {
+    for (const path of ["/auth/derive-api-key", "/book", "/tick-size", "/balance-allowance", "/data/order/0xabc", "markets-by-token/12345", "rewards/markets/0xdef"]) {
+      expect(parseSignRequest({ method: "GET", path }).ok, path).toBe(true);
+    }
   });
 
   it("rejects paths and methods the app never signs", () => {
     expect(parseSignRequest({ method: "POST", path: "/auth/builder-api-key" }).ok).toBe(false);
+    expect(parseSignRequest({ method: "DELETE", path: "/auth/builder-api-key" }).ok).toBe(false);
     expect(parseSignRequest({ method: "POST", path: "/v1/session-signers/authorizations" }).ok).toBe(false);
-    expect(parseSignRequest({ method: "GET", path: "/order" }).ok).toBe(false);
+    expect(parseSignRequest({ method: "GET", path: "/auth/builder-api-key" }).ok).toBe(false);
+    expect(parseSignRequest({ method: "GET", path: "/v1/user/session-signers" }).ok).toBe(false);
+    expect(parseSignRequest({ method: "GET", path: "/book?token_id=1" }).ok).toBe(false);
+    expect(parseSignRequest({ method: "GET", path: "/a/../auth/builder-api-key" }).ok).toBe(false);
+    expect(parseSignRequest({ method: "PUT", path: "/order" }).ok).toBe(false);
     expect(parseSignRequest({ method: "POST", path: "/order/../auth/api-key" }).ok).toBe(false);
     expect(parseSignRequest({ method: "POST", path: "https://evil.test/order" }).ok).toBe(false);
   });

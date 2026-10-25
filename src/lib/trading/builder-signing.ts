@@ -25,15 +25,28 @@ export function readBuilderCreds(env: Record<string, string | undefined>): Build
   return key && secret && passphrase ? { key, secret, passphrase } : null;
 }
 
-const QUERY = "(\\?[A-Za-z0-9_=&.%-]*)?";
-
-/** Method + path pairs the SDK builder-signs for this app: CLOB order writes and relayer calls. */
-const SIGNABLE: readonly { method: string; path: RegExp }[] = [
-  { method: "POST", path: /^\/(order|orders|orders-scoring|submit)$/ },
-  { method: "DELETE", path: /^\/(order|orders|cancel-all|cancel-market-orders)$/ },
-  { method: "GET", path: new RegExp(`^/(deployed|v1/account/transactions/params)${QUERY}$`) },
-  { method: "GET", path: /^\/v1\/account\/transactions\/[A-Za-z0-9-]{1,128}$/ },
+/**
+ * With a builder key the SDK builder-signs every CLOB request (reads included: API key
+ * derivation, books, balances) and every relayer call. Signed paths never carry a query
+ * string (the SDK sends params separately), and some are relative ("books").
+ *
+ * Writes are allowlisted exactly: relayer /submit spends builder gas sponsorship.
+ * Reads are allowed by shape: builder headers alone grant nothing on a GET.
+ * Builder-key and session-signer management are never signed.
+ */
+const SIGNABLE_WRITES: readonly { method: string; path: RegExp }[] = [
+  { method: "POST", path: /^\/(order|orders|orders-scoring|submit|auth\/api-key)$/ },
+  { method: "POST", path: /^\/?(books|prices|midpoints|spreads|last-trades-prices)$/ },
+  { method: "DELETE", path: /^\/(order|orders|cancel-all|cancel-market-orders|auth\/api-key|notifications)$/ },
 ];
+const READ_PATH = /^\/?[A-Za-z0-9_.-]+(\/[A-Za-z0-9_.-]+)*$/;
+const NEVER_SIGNED = /(^|\/)(auth\/builder-api-key|v1\/user\/session-signers|v1\/session-signers)(\/|$)/;
+
+function isSignable(method: string, path: string): boolean {
+  if (NEVER_SIGNED.test(path) || path.split("/").some((segment) => segment === "." || segment === "..")) return false;
+  if (method === "GET") return READ_PATH.test(path);
+  return SIGNABLE_WRITES.some((rule) => rule.method === method && rule.path.test(path));
+}
 
 /** The relayer and CLOB order payloads are a few KB; anything larger is not ours. */
 const MAX_BODY_CHARS = 64_000;
@@ -56,7 +69,7 @@ export function parseSignRequest(raw: unknown): ParseResult {
   const parsed = signRequestSchema.safeParse(raw);
   if (!parsed.success) return { ok: false, error: "Invalid signing request" };
   const { method, path, body } = parsed.data;
-  if (!SIGNABLE.some((rule) => rule.method === method && rule.path.test(path))) {
+  if (!isSignable(method, path)) {
     return { ok: false, error: "Request not allowed" };
   }
   return { ok: true, value: body === undefined ? { method, path } : { method, path, body } };

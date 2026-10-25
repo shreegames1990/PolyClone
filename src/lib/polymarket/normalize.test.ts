@@ -150,3 +150,15 @@ describe("normalizeEvent", () => {
     expect(e.tags).toEqual([]);
   });
 });
+
+describe("normalizeMarket fee schedule", () => {
+  it("keeps the fee schedule when fees are enabled", () => {
+    const m = normalizeMarket({ id: "f", feesEnabled: true, feeSchedule: { exponent: 1, rate: 0.05, takerOnly: true, rebateRate: 0.15 } });
+    expect(m.fee).toEqual({ rate: 0.05, exponent: 1, takerOnly: true });
+  });
+
+  it("has no fee when fees are disabled or missing", () => {
+    expect(normalizeMarket({ id: "f", feesEnabled: false, feeSchedule: { exponent: 1, rate: 0.05, takerOnly: true } }).fee).toBeNull();
+    expect(normalizeMarket({ id: "g" }).fee).toBeNull();
+  });
+});

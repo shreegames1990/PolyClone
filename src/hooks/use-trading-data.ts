@@ -60,11 +60,33 @@ export function useOpenOrders() {
     queryFn: async () => {
       const orders: OpenOrder[] = [];
       let pages = 0;
-      for await (const page of client!.listOpenOrders()) {
-        orders.push(...page.items);
-        if (++pages >= MAX_ORDER_PAGES) break;
+      try {
+        for await (const page of client!.listOpenOrders()) {
+          orders.push(...page.items);
+          if (++pages >= MAX_ORDER_PAGES) break;
+        }
+      } catch (error) {
+        console.error("[trading] open orders failed", error);
+        throw error;
       }
       return orders;
+    },
+  });
+}
+
+/** Cancels several orders in one request (e.g. "Cancel all" on an event page). */
+export function useCancelOrders() {
+  const { client, tradingAddress } = useTrading();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (orderIds: string[]) => client!.cancelOrders({ orderIds }),
+    onSuccess: (_result, orderIds) => {
+      toast.success(orderIds.length === 1 ? "Order cancelled." : `${orderIds.length} orders cancelled.`);
+      return queryClient.invalidateQueries({ queryKey: ["open-orders", tradingAddress] });
+    },
+    onError: (error) => {
+      console.error("[trading] cancel orders failed", error);
+      toast.error(describeTradeError(error));
     },
   });
 }

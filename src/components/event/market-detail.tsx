@@ -6,6 +6,7 @@ import { OrderBook } from "./order-book";
 import { Card } from "@/components/ui/card";
 import type { OrderBook as Book } from "@/lib/polymarket/orderbook";
 import type { SocketStatus } from "@/hooks/use-live-books";
+import type { RestingPrices } from "@/lib/polymarket/event-orders";
 import { cn } from "@/lib/utils";
 
 export type DetailTab = "book" | "graph" | "about";
@@ -22,6 +23,7 @@ export function MarketDetail({
   defaultTab,
   tradeLabel,
   book,
+  resting,
   status,
   series,
   description,
@@ -30,6 +32,7 @@ export function MarketDetail({
   defaultTab: DetailTab;
   tradeLabel: string;
   book: Book | undefined;
+  resting?: RestingPrices;
   status: SocketStatus;
   series: readonly ChartSeries[];
   description: string;
@@ -54,7 +57,7 @@ export function MarketDetail({
         ))}
       </div>
       <div className={cn(tab !== "book" && "p-4")}>
-        {tab === "book" && <OrderBook book={book} status={status} tradeLabel={tradeLabel} />}
+        {tab === "book" && <OrderBook book={book} status={status} tradeLabel={tradeLabel} resting={resting} />}
         {tab === "graph" && <PriceChart series={series} />}
         {tab === "about" && (
           <p className="whitespace-pre-line text-body-sm text-base-content/70">

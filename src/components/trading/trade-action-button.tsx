@@ -16,12 +16,15 @@ export function TradeActionButton({
   label,
   disabled,
   onSubmit,
+  color,
 }: {
   label: string;
   disabled: boolean;
   onSubmit: () => void;
+  /** Team color for the final "Place order" button (polymarket.com); indigo otherwise. */
+  color?: string;
 }) {
-  const { status, enableTrading, enabling, profileStatus } = useTrading();
+  const { status, enableTrading, enabling, restoring, profileStatus } = useTrading();
   const { switchChain, isPending: switching } = useSwitchChain();
   const { state: approvals, approve } = useTradingApprovals();
 
@@ -43,7 +46,7 @@ export function TradeActionButton({
       </Button>
     );
   }
-  if (status === "locked" && profileStatus === "loading") {
+  if (status === "locked" && (profileStatus === "loading" || restoring)) {
     return (
       <Button className="w-full" size="lg" disabled>
         Loading your account…
@@ -66,7 +69,14 @@ export function TradeActionButton({
     );
   }
   return (
-    <Button className="w-full" size="lg" variant="trade" disabled={disabled} onClick={onSubmit}>
+    <Button
+      className="w-full border-none shadow-[0_3px_0_rgb(0_0_0/0.25)]"
+      size="lg"
+      variant="trade"
+      disabled={disabled}
+      onClick={onSubmit}
+      style={color ? { backgroundColor: color, color: "#fff" } : undefined}
+    >
       {label}
     </Button>
   );

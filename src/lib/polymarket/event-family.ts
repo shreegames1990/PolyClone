@@ -11,10 +11,6 @@ export const isChildEvent = (event: PolyEvent): boolean => event.parentEventId !
 export const withoutChildEvents = (events: readonly PolyEvent[]): PolyEvent[] =>
   events.filter((e) => !isChildEvent(e));
 
-/** Highest 24h volume first; returns a new array. */
-export const byVolume24hrDesc = (events: readonly PolyEvent[]): PolyEvent[] =>
-  [...events].sort((a, b) => b.volume24hr - a.volume24hr);
-
 /** Only sports events have child events, so other events skip the lookup. */
 export const hasSportsMarkets = (event: PolyEvent): boolean =>
   event.markets.some((m) => m.sportsMarketType !== "");

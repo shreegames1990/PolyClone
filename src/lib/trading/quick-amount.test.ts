@@ -45,8 +45,13 @@ describe("stepLimitPrice", () => {
 });
 
 describe("maxBuyShares", () => {
-  it("returns whole shares affordable at the limit price", () => {
-    expect(maxBuyShares(156.74, "71")).toBe("220");
+  it("returns whole shares affordable at the limit price, with a small safety margin", () => {
+    expect(maxBuyShares(156.74, "71")).toBe("219");
+  });
+
+  it("leaves room for the taker fee", () => {
+    // $100 at 50¢ with a 2.5% fee share: 100 / 1.025 × 0.995 / 0.5 ≈ 194.1 → 194 shares
+    expect(maxBuyShares(100, "50", { rate: 0.05, exponent: 1, takerOnly: true })).toBe("194");
   });
 
   it("returns empty when balance or price is unknown or invalid", () => {

@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  byVolume24hrDesc,
   buildEventLookupQuery,
   buildGameTabs,
   childEventLabel,
@@ -83,17 +82,5 @@ describe("buildGameTabs", () => {
 
   it("returns no tabs when the game has no children", () => {
     expect(buildGameTabs(main, [])).toEqual([]);
-  });
-});
-
-describe("byVolume24hrDesc", () => {
-  it("orders events by 24h volume, highest first, without mutating the input", () => {
-    const events = [
-      normalizeEvent({ id: "a", volume24hr: 5 }),
-      normalizeEvent({ id: "b", volume24hr: 50 }),
-      normalizeEvent({ id: "c", volume24hr: 20 }),
-    ];
-    expect(byVolume24hrDesc(events).map((e) => e.id)).toEqual(["b", "c", "a"]);
-    expect(events.map((e) => e.id)).toEqual(["a", "b", "c"]);
   });
 });

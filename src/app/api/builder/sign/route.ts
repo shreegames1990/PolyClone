@@ -35,7 +35,12 @@ export async function POST(request: Request) {
     return fail(400, "Invalid JSON");
   }
   const parsed = parseSignRequest(payload);
-  if (!parsed.ok) return fail(400, parsed.error);
+  if (!parsed.ok) {
+    // Method and path only (no body): shows which SDK request needs allowlisting.
+    const { method, path } = (payload ?? {}) as { method?: unknown; path?: unknown };
+    console.warn("[builder-sign] rejected", String(method).slice(0, 10), String(path).slice(0, 120), parsed.error);
+    return fail(400, parsed.error);
+  }
 
   const { method, path, body } = parsed.value;
   try {

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { POLYMARKET_HOSTS } from "./config";
 import { fetchJson } from "./http";
 import { normalizeEvent } from "./normalize";
-import { buildEventLookupQuery, byVolume24hrDesc, withoutChildEvents } from "./event-family";
+import { buildEventLookupQuery, withoutChildEvents } from "./event-family";
 import { buildEventsQuery, type BrowseParams, type EventFilter } from "./queries";
 import { parseRelatedTags, type RelatedTag } from "./groups";
 import type { PolyEvent } from "./types";
@@ -29,9 +29,8 @@ export async function getEvents(params: BrowseParams, filter?: EventFilter): Pro
   cacheLife("minutes");
   const raw = await fetchJson(gammaUrl("events/keyset", buildEventsQuery(params, Date.now(), filter)));
   const page = keysetSchema.parse(raw);
-  const events = withoutChildEvents(page.events.map(normalizeEvent));
-  // Live games are fetched unordered (see buildEventsQuery), so order this page here.
-  return { events: filter?.kind === "live" ? byVolume24hrDesc(events) : events, nextCursor: page.next_cursor ?? null };
+  // Live games come back unordered (see buildEventsQuery); the Live page groups and sorts them.
+  return { events: withoutChildEvents(page.events.map(normalizeEvent)), nextCursor: page.next_cursor ?? null };
 }
 
 /** Returns null when the slug does not exist. */

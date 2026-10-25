@@ -1,4 +1,5 @@
 import type { TickSize } from "@/lib/polymarket/types";
+import { maxSpendAfterFees, type FeeSchedule } from "./fees";
 
 /** One-tap dollar increments for market buys. */
 export const QUICK_DOLLARS = [1, 20, 100] as const;
@@ -33,9 +34,9 @@ export function stepLimitPrice(
   return String(Number(next.toFixed(decimals)));
 }
 
-/** Whole shares a balance can buy at a limit price; "" when either is unknown. */
-export function maxBuyShares(balance: number | undefined, limitPriceCents: string): string {
+/** Whole shares a balance can buy at a limit price after fees; "" when either is unknown. */
+export function maxBuyShares(balance: number | undefined, limitPriceCents: string, fee: FeeSchedule | null = null): string {
   const price = positiveOrZero(limitPriceCents) / CENTS;
   if (balance === undefined || price <= 0) return "";
-  return String(Math.floor(balance / price));
+  return String(Math.floor(maxSpendAfterFees(balance, price, fee) / price));
 }

@@ -8,6 +8,9 @@ export const CLOB_WS_MARKET_URL = "wss://ws-subscriptions-clob.polymarket.com/ws
 
 export const POLYGON_CHAIN_ID = 137;
 
+/** pUSD, Polymarket's collateral token on Polygon (checked against the SDK in config.test.ts). */
+export const PUSD_ADDRESS = "0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB" as const;
+
 export type PolymarketService = keyof typeof POLYMARKET_HOSTS;
 
 /**

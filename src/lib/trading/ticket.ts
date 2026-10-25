@@ -1,4 +1,6 @@
 import type { OrderBook } from "@/lib/polymarket/orderbook";
+import { feeShareOfSpend, takerFeeUsd, type FeeSchedule } from "./fees";
+import { expiryLabel, type ExpiryOption } from "./expiry";
 import type { TickSize } from "@/lib/polymarket/types";
 import { formatCents, formatUsd } from "@/lib/format";
 import {
@@ -27,6 +29,10 @@ export interface TicketInput {
   readonly book: OrderBook | undefined;
   /** pUSD balance (BUY) or shares held (SELL); undefined when unknown. */
   readonly available: number | undefined;
+  /** Market taker fee schedule; buys must cover amount + fee. */
+  readonly fee?: FeeSchedule | null;
+  /** Limit order expiry (default good-till-cancelled). */
+  readonly expiry?: ExpiryOption;
 }
 
 export interface TicketEstimate {
@@ -35,6 +41,8 @@ export interface TicketEstimate {
   /** BUY: payout if the outcome wins. SELL: proceeds. */
   readonly payout: number;
   readonly avgPrice: number;
+  /** Estimated taker fee in dollars (buys); 0 when the market has no fees. */
+  readonly fee: number;
 }
 
 export interface TicketResult {
@@ -78,13 +86,16 @@ function marketTicket(input: TicketInput): TicketResult {
   const buy = isBuy ? estimateMarketBuy(input.book.asks, amount) : null;
   const sell = isBuy ? null : estimateMarketSell(input.book.bids, amount);
   const est = buy ?? sell!;
+  // Fee share is highest at the cheapest fill, so budget at the best ask.
+  const fee = isBuy ? amount * feeShareOfSpend(input.book.asks[0]?.price ?? est.avgPrice, input.fee ?? null) : 0;
   const estimate: TicketEstimate = {
     shares: buy ? buy.shares : amount,
     cost: isBuy ? amount : 0,
     payout: buy ? buy.shares : sell!.proceeds,
     avgPrice: est.avgPrice,
+    fee,
   };
-  const error = validateMarketOrder({ amount, filled: est.filled }) ?? balanceError(input, amount);
+  const error = validateMarketOrder({ amount, filled: est.filled }) ?? balanceError(input, isBuy ? amount + fee : amount);
   if (error) return { ...EMPTY, error, estimate };
 
   return {
@@ -107,27 +118,31 @@ function marketTicket(input: TicketInput): TicketResult {
 function limitTicket(input: TicketInput): TicketResult {
   const cents = parseDecimal(input.limitPriceCents);
   const rawShares = parseDecimal(input.shares);
-  if (cents === null && rawShares === null) return EMPTY;
+  // The limit price is prefilled, so an order only starts once shares are entered.
+  if (rawShares === null) return EMPTY;
   if (Number.isNaN(cents) || Number.isNaN(rawShares)) return { ...EMPTY, error: INVALID_NUMBER };
   const price = (cents ?? Number.NaN) / 100;
   const shares = rawShares ?? Number.NaN;
 
   const summary = limitOrderSummary({ side: input.side, price, shares });
+  // Budget the taker fee for buys: a marketable limit order fills as a taker.
+  const fee = input.side === "BUY" ? takerFeeUsd(shares, price, input.fee ?? null) : 0;
   const error =
     validateLimitOrder({ price, shares, tickSize: input.tickSize, minSize: input.minSize }) ??
-    balanceError(input, input.side === "BUY" ? summary.total : shares);
+    balanceError(input, input.side === "BUY" ? summary.total + fee : shares);
   if (error) return { ...EMPTY, error };
 
-  const estimate: TicketEstimate = { shares, cost: summary.total, payout: summary.payout, avgPrice: price };
+  const estimate: TicketEstimate = { shares, cost: summary.total, payout: summary.payout, avgPrice: price, fee };
   const isBuy = input.side === "BUY";
   return {
-    ticket: { kind: "limit", tokenId: input.tokenId, side: input.side, price, shares },
+    ticket: { kind: "limit", tokenId: input.tokenId, side: input.side, price, shares, expiry: input.expiry ?? "never" },
     error: null,
     estimate,
     preview: {
       title: `${isBuy ? "Buy" : "Sell"} ${input.outcomeName}`,
       rows: [
-        { label: "Order type", value: "Limit (good till cancelled)" },
+        { label: "Order type", value: (input.expiry ?? "never") === "never" ? "Limit (good till cancelled)" : "Limit (good till date)" },
+        { label: "Expires", value: expiryLabel(input.expiry ?? "never") },
         { label: "Limit price", value: formatCents(price) },
         { label: "Shares", value: shares.toFixed(2) },
         { label: isBuy ? "Total cost" : "Total proceeds", value: formatUsd(summary.total) },
@@ -138,6 +153,13 @@ function limitTicket(input: TicketInput): TicketResult {
 }
 
 /** Turns raw form input into a validated order ticket plus a preview. */
+/** Adds the estimated taker fee to the confirmation preview when there is one. */
+function withFeeRow(result: TicketResult): TicketResult {
+  const fee = result.estimate?.fee ?? 0;
+  if (!result.preview || fee <= 0) return result;
+  return { ...result, preview: { ...result.preview, rows: [...result.preview.rows, { label: "Est. fee", value: formatUsd(fee) }] } };
+}
+
 export function buildTicket(input: TicketInput): TicketResult {
-  return input.kind === "market" ? marketTicket(input) : limitTicket(input);
+  return withFeeRow(input.kind === "market" ? marketTicket(input) : limitTicket(input));
 }

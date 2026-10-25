@@ -9,6 +9,7 @@ import { buildEventPositions, type EventPositionRow } from "@/lib/polymarket/eve
 import type { PolyEvent } from "@/lib/polymarket/types";
 import { formatCents, formatUsd } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { OutcomeBadge } from "./outcome-badge";
 
 const COLUMNS = ["Type", "Outcome", "Avg", "Cost", "To win", "Current", ""] as const;
 
@@ -68,7 +69,7 @@ function PositionRow({ row, onSell }: { row: EventPositionRow; onSell: (marketId
     <tr className="border-border text-body-sm">
       <td className="max-w-40 truncate font-medium">{row.type}</td>
       <td>
-        <OutcomeBadge row={row} />
+        <OutcomeBadge label={row.outcome} color={row.color} outcomeIndex={row.outcomeIndex} count={row.position.size} />
       </td>
       <td>{formatCents(position.avgPrice)}</td>
       <td>{formatUsd(position.cost)}</td>
@@ -83,21 +84,5 @@ function PositionRow({ row, onSell }: { row: EventPositionRow; onSell: (marketId
         </button>
       </td>
     </tr>
-  );
-}
-
-/** "BIL YES | 3,112" — team color for moneyline outcomes, green/red otherwise. */
-function OutcomeBadge({ row }: { row: EventPositionRow }) {
-  const shares = row.position.size.toLocaleString("en-US", { maximumFractionDigits: 0 });
-  const toneClass = row.color ? "" : row.outcomeIndex === 0 ? "bg-yes/15 text-yes" : "bg-no/15 text-no";
-  return (
-    <span
-      className={cn("inline-flex items-center gap-2 whitespace-nowrap rounded-field px-2 py-1 text-label font-semibold", toneClass)}
-      style={row.color ? { color: row.color, backgroundColor: `color-mix(in oklab, ${row.color} 15%, transparent)` } : undefined}
-    >
-      <span>{row.outcome}</span>
-      <span className="h-3.5 w-px bg-current opacity-40" aria-hidden />
-      <span>{shares}</span>
-    </span>
   );
 }

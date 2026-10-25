@@ -12,8 +12,20 @@ const str = z.string().catch("");
 const bool = z.boolean().catch(false);
 
 const tagSchema = z.object({ id: z.coerce.string().catch(""), label: str, slug: str });
-const EMPTY_TEAM = { name: "", abbreviation: "", color: "", logo: "" };
-const teamSchema = z.object({ name: str, abbreviation: str, color: str, logo: str }).catch(EMPTY_TEAM);
+const EMPTY_TEAM = { name: "", abbreviation: "", alias: "", color: "", logo: "" };
+
+/** Gamma team logo URLs can contain raw spaces and accents; encode without double-encoding. */
+function encodeUrl(url: string): string {
+  try {
+    return encodeURI(decodeURI(url));
+  } catch {
+    return encodeURI(url);
+  }
+}
+
+const teamSchema = z
+  .object({ name: str, abbreviation: str, alias: str, color: str, logo: str.transform(encodeUrl) })
+  .catch(EMPTY_TEAM);
 
 const rawMarketSchema = z.object({
   id: z.coerce.string().catch(""),
@@ -47,6 +59,11 @@ const rawMarketSchema = z.object({
   negRisk: bool,
   orderPriceMinTickSize: num,
   orderMinSize: num,
+  feesEnabled: bool,
+  feeSchedule: z
+    .object({ rate: z.coerce.number(), exponent: z.coerce.number(), takerOnly: z.boolean().catch(true) })
+    .nullish()
+    .catch(null),
 });
 
 const rawEventSchema = z.object({
@@ -134,6 +151,7 @@ export function normalizeMarket(input: unknown): Market {
     negRisk: raw.negRisk,
     tickSize: toTickSize(raw.orderPriceMinTickSize),
     minSize: raw.orderMinSize > 0 ? raw.orderMinSize : DEFAULT_MIN_SIZE,
+    fee: raw.feesEnabled && raw.feeSchedule ? raw.feeSchedule : null,
   };
 }
 

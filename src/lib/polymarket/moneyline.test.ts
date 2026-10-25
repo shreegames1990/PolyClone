@@ -22,7 +22,7 @@ const raw = {
 describe("normalizeEvent teams", () => {
   it("keeps team names, abbreviations, colors and logos", () => {
     const e = normalizeEvent(raw);
-    expect(e.teams[0]).toEqual({ name: HOME, abbreviation: "mad", color: "#444488", logo: "https://x.test/mad.png" });
+    expect(e.teams[0]).toEqual({ name: HOME, abbreviation: "mad", alias: "Atlético", color: "#444488", logo: "https://x.test/mad.png" });
     expect(normalizeEvent({ id: "2" }).teams).toEqual([]);
   });
 });

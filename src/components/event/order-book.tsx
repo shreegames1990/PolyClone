@@ -3,6 +3,8 @@
 import { bookSummary, withCumulativeTotals, type CumulativeLevel, type OrderBook as Book } from "@/lib/polymarket/orderbook";
 import type { SocketStatus } from "@/hooks/use-live-books";
 import { formatCents, formatUsd } from "@/lib/format";
+import { priceKey, type RestingPrices } from "@/lib/polymarket/event-orders";
+import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /** Levels loaded per side; deeper levels are reached by scrolling. */
@@ -15,14 +17,19 @@ const HALF_STYLE = { maxHeight: `${VISIBLE_LEVELS * ROW_REM}rem` };
 const GRID =
   "grid grid-cols-[1fr_3.25rem_4.75rem_5.5rem] items-center gap-1.5 px-3 sm:grid-cols-[1fr_5rem_6rem_7rem] sm:gap-2 sm:px-4";
 
+const NO_RESTING: RestingPrices = { bids: new Set(), asks: new Set() };
+
 export function OrderBook({
   book,
   status,
   tradeLabel,
+  resting = NO_RESTING,
 }: {
   book: Book | undefined;
   status: SocketStatus;
   tradeLabel: string;
+  /** Levels holding the user's open orders, marked with a clock (polymarket.com). */
+  resting?: RestingPrices;
 }) {
   const { spread } = bookSummary(book);
   // Totals accumulate outward from the spread. Asks render best-first in a column-reverse list,
@@ -49,7 +56,7 @@ export function OrderBook({
         <>
           <div className="flex flex-col-reverse overflow-y-auto" style={HALF_STYLE}>
             {asks.map((l, i) => (
-              <Row key={`a${l.price}`} level={l} side="ask" maxTotal={maxTotal} badge={i === 0} />
+              <Row key={`a${l.price}`} level={l} side="ask" maxTotal={maxTotal} badge={i === 0} mine={resting.asks.has(priceKey(l.price))} />
             ))}
           </div>
           <div className={cn(GRID, "h-8 border-y border-border text-caption font-medium text-base-content/70")}>
@@ -58,7 +65,7 @@ export function OrderBook({
           </div>
           <div className="overflow-y-auto" style={HALF_STYLE}>
             {bids.map((l, i) => (
-              <Row key={`b${l.price}`} level={l} side="bid" maxTotal={maxTotal} badge={i === 0} />
+              <Row key={`b${l.price}`} level={l} side="bid" maxTotal={maxTotal} badge={i === 0} mine={resting.bids.has(priceKey(l.price))} />
             ))}
           </div>
         </>
@@ -67,10 +74,22 @@ export function OrderBook({
   );
 }
 
-function Row({ level, side, maxTotal, badge }: { level: CumulativeLevel; side: "bid" | "ask"; maxTotal: number; badge: boolean }) {
+function Row({
+  level,
+  side,
+  maxTotal,
+  badge,
+  mine,
+}: {
+  level: CumulativeLevel;
+  side: "bid" | "ask";
+  maxTotal: number;
+  badge: boolean;
+  mine: boolean;
+}) {
   const isBid = side === "bid";
   return (
-    <div className={cn(GRID, "relative h-7 shrink-0 hover:bg-base-300/40")}>
+    <div data-price={priceKey(level.price)} className={cn(GRID, "relative h-7 shrink-0 hover:bg-base-300/40")}>
       <div
         aria-hidden
         className={cn("absolute inset-y-0 left-0", isBid ? "bg-yes/10" : "bg-no/10")}
@@ -79,7 +98,10 @@ function Row({ level, side, maxTotal, badge }: { level: CumulativeLevel; side: "
       <span className="relative">
         {badge && <span className={cn("badge badge-xs border-none font-semibold", isBid ? "badge-success" : "badge-error")}>{isBid ? "Bids" : "Asks"}</span>}
       </span>
-      <span className={cn("relative text-right font-medium", isBid ? "text-yes" : "text-no")}>{formatCents(level.price)}</span>
+      <span className={cn("relative flex items-center justify-end gap-1.5 font-medium", isBid ? "text-yes" : "text-no")}>
+        {mine && <Clock aria-label="Your resting order" className="size-3.5 text-base-content/70" />}
+        {formatCents(level.price)}
+      </span>
       <span className="relative text-right">{level.size.toLocaleString("en-US", { maximumFractionDigits: 2 })}</span>
       <span className="relative text-right">{formatUsd(level.total)}</span>
     </div>
