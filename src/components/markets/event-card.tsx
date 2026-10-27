@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LiveScore } from "./live-score";
 import { MarketImage } from "./market-image";
 import { ChanceGauge } from "@/components/ui/chance-gauge";
 import { outcomeButtonVariants } from "@/components/ui/outcome-button";
@@ -20,6 +21,8 @@ export function EventCard({ event }: { event: PolyEvent }) {
         <h3 className="line-clamp-2 flex-1 text-body-sm font-semibold">{event.title}</h3>
         {binary && <ChanceGauge value={binary.outcomes[0]?.price ?? 0} />}
       </Link>
+
+      <LiveScore event={event} />
 
       <div>
         {binary ? (

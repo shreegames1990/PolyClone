@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { TickSize } from "@/lib/polymarket/types";
-import type { Market, Outcome, PolyEvent, Tag, Team } from "./types";
+import type { Game, Market, Outcome, PolyEvent, Tag, Team } from "./types";
 
 /**
  * Gamma returns numbers as strings or numbers and several arrays as
@@ -84,6 +84,14 @@ const rawEventSchema = z.object({
   tags: z.array(tagSchema).catch([]),
   teams: z.array(z.unknown()).catch([]),
   markets: z.array(z.unknown()).catch([]),
+  gameId: z.coerce.number().int().positive().nullable().catch(null),
+  homeTeamName: str,
+  awayTeamName: str,
+  live: bool,
+  ended: bool,
+  score: str,
+  period: str,
+  elapsed: z.union([z.string(), z.number()]).transform(String).catch(""),
 });
 
 const TICK_SIZES: readonly TickSize[] = ["0.1", "0.01", "0.001", "0.0001"];
@@ -169,6 +177,16 @@ function compareMarkets(a: Market, b: Market): number {
   return yesPrice(b) - yesPrice(a);
 }
 
+function buildGame(raw: z.infer<typeof rawEventSchema>): Game | null {
+  if (raw.gameId === null) return null;
+  return {
+    id: raw.gameId,
+    homeTeam: raw.homeTeamName,
+    awayTeam: raw.awayTeamName,
+    state: { live: raw.live, ended: raw.ended, score: raw.score, period: raw.period, elapsed: raw.elapsed },
+  };
+}
+
 export function normalizeEvent(input: unknown): PolyEvent {
   const raw = rawEventSchema.parse(input ?? {});
   const markets = raw.markets.map(normalizeMarket).sort(compareMarkets);
@@ -192,6 +210,7 @@ export function normalizeEvent(input: unknown): PolyEvent {
     tags,
     teams,
     markets,
+    game: buildGame(raw),
     isBinary: markets.length === 1,
   };
 }

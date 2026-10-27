@@ -52,6 +52,26 @@ export interface Team {
   readonly logo: string;
 }
 
+/** A game's clock and score, from Gamma or the sports socket. */
+export interface GameState {
+  readonly live: boolean;
+  readonly ended: boolean;
+  /** "home-away" goals for soccer, e.g. "2-1"; "" before kick-off. */
+  readonly score: string;
+  /** "1H", "HT", "2H", "FT", …; "" if unknown. */
+  readonly period: string;
+  /** Minutes played, e.g. "67" or "45+2"; "" if unknown. */
+  readonly elapsed: string;
+}
+
+/** Sports game behind an event (Gamma `gameId`), keyed like the sports socket. */
+export interface Game {
+  readonly id: number;
+  readonly homeTeam: string;
+  readonly awayTeam: string;
+  readonly state: GameState;
+}
+
 export interface PolyEvent {
   readonly id: string;
   /** Gamma `parentEventId` for a game's child events ("Exact Score", "More Markets", …); "" otherwise. */
@@ -71,6 +91,8 @@ export interface PolyEvent {
   readonly tags: readonly Tag[];
   readonly teams: readonly Team[];
   readonly markets: readonly Market[];
+  /** The sports game this event trades on; null for non-game events. */
+  readonly game: Game | null;
   /** True when the event is a single Yes/No market. */
   readonly isBinary: boolean;
 }

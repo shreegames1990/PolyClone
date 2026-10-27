@@ -162,3 +162,29 @@ describe("normalizeMarket fee schedule", () => {
     expect(normalizeMarket({ id: "g" }).fee).toBeNull();
   });
 });
+
+describe("normalizeEvent game", () => {
+  it("keeps the Gamma game id, home/away teams, and live score", () => {
+    const event = normalizeEvent({
+      gameId: "9001",
+      homeTeamName: "Arsenal",
+      awayTeamName: "Chelsea",
+      live: true,
+      ended: false,
+      score: "2-1",
+      period: "2H",
+      elapsed: 67,
+    });
+    expect(event.game).toEqual({
+      id: 9001,
+      homeTeam: "Arsenal",
+      awayTeam: "Chelsea",
+      state: { live: true, ended: false, score: "2-1", period: "2H", elapsed: "67" },
+    });
+  });
+
+  it("has no game without a Gamma game id", () => {
+    expect(normalizeEvent({ score: "1-0", live: true }).game).toBeNull();
+    expect(normalizeEvent({ gameId: null }).game).toBeNull();
+  });
+});

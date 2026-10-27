@@ -6,6 +6,9 @@ export const POLYMARKET_HOSTS = {
 
 export const CLOB_WS_MARKET_URL = "wss://ws-subscriptions-clob.polymarket.com/ws/market";
 
+/** Live game scores (`sport_result` frames); matches the SDK's `environment.sports.ws`. */
+export const SPORTS_WS_URL = "wss://sports-api.polymarket.com/ws";
+
 export const POLYGON_CHAIN_ID = 137;
 
 /** pUSD, Polymarket's collateral token on Polygon (checked against the SDK in config.test.ts). */
